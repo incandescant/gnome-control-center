@@ -77,7 +77,7 @@ gnome_control_center_LDADD += $(top_builddir)/panels/printers/libprinters.la
 endif
 
 if BUILD_NETWORK
-gnome_control_center_LDADD += $(top_builddir)/panels/network/libnetwork.la
+gnome_control_center_LDADD += $(top_builddir)/panels/connman/libnetwork.la
 endif
 
 if BUILD_BLUETOOTH
