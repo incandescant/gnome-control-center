@@ -99,8 +99,6 @@ CANBERRA_REQUIRED_VERSION=0.13
 GDKPIXBUF_REQUIRED_VERSION=2.23.0
 POLKIT_REQUIRED_VERSION=0.103
 GSD_REQUIRED_VERSION=3.7.3
-NETWORK_MANAGER_REQUIRED_VERSION=0.9.8
-NETWORK_MANAGER_APPLET_REQUIRED_VERSION=0.9.7.995
 LIBNOTIFY_REQUIRED_VERSION=0.7.3
 GNOME_DESKTOP_REQUIRED_VERSION=3.7.5
 SCHEMAS_REQUIRED_VERSION=3.7.2.2
@@ -110,6 +108,7 @@ GOA_REQUIRED_VERSION=3.8.1
 ACCOUNTSSERVICE_REQUIRED_VERSION=0.6.30
 COLORD_REQUIRED_VERSION=0.1.29
 COLORD_GTK_REQUIRED_VERSION=0.1.24
+CONNMAN_REQUIRED_VERSION=1.11
 
 COMMON_MODULES="gtk+-3.0 >= $GTK_REQUIRED_VERSION
  glib-2.0 >= $GLIB_REQUIRED_VERSION
@@ -179,24 +178,17 @@ AM_CONDITIONAL(HAVE_INTROSPECTION, false)
 GDESKTOP_PREFIX=`$PKG_CONFIG --variable prefix gsettings-desktop-schemas`
 AC_SUBST(GDESKTOP_PREFIX)
 
-PKG_CHECK_MODULES(NETWORK_MANAGER, NetworkManager >= $NETWORK_MANAGER_REQUIRED_VERSION
-                  libnm-glib >= $NETWORK_MANAGER_REQUIRED_VERSION
-                  libnm-glib-vpn >= $NETWORK_MANAGER_REQUIRED_VERSION
-                  libnm-util >= $NETWORK_MANAGER_REQUIRED_VERSION
-                  libnm-gtk >= $NETWORK_MANAGER_APPLET_REQUIRED_VERSION,
-                  [have_networkmanager=yes], have_networkmanager=no)
-if test "x$have_networkmanager" = xno ; then
-        AC_MSG_WARN(*** Network panel will not be built (NetworkManager not found) ***)
+# Check for ConnMan
+PKG_CHECK_MODULES(CONNMAN, connman >= $CONNMAN_REQUIRED_VERSION,
+                  [have_connman=yes], have_connman=no)
+if test "x$have_connman" = xno ; then
+        AC_MSG_WARN(*** Network panel will not be built (ConnMan not found) ***)
 else
-	AC_DEFINE(BUILD_NETWORK, 1, [Define to 1 to build the Network panel])
+        AC_DEFINE(BUILD_NETWORK, 1, [Define to 1 to build the Network panel])
 fi
-AM_CONDITIONAL(BUILD_NETWORK, [test x$have_networkmanager = xyes])
-if test x${have_networkmanager} = xyes; then
-  AC_DEFINE(HAVE_NETWORK_MANAGER, 1, [Define to 1 if NetworkManager is available])
-  NM_VPN_CONFIG_DIR=`$PKG_CONFIG --variable configdir NetworkManager`/VPN
-  NM_VPN_MODULE_DIR=`$PKG_CONFIG --variable plugindir NetworkManager`
-  AC_SUBST(NM_VPN_CONFIG_DIR)
-  AC_SUBST(NM_VPN_MODULE_DIR)
+AM_CONDITIONAL(BUILD_NETWORK, [test x$have_connman = xyes])
+if test x${have_connman} = xyes; then
+  AC_DEFINE(HAVE_CONNMAN, 1, [Define to 1 if ConnMan is available])
 fi
 
 # Check for libmm-glib for ModemManager1 support
@@ -517,14 +509,12 @@ panels/color/icons/48x48/Makefile
 panels/color/icons/64x64/Makefile
 panels/color/icons/256x256/Makefile
 panels/color/icons/scalable/Makefile
+panels/connman/Makefile
+panels/connman/gnome-network-panel.desktop.in
 panels/printers/Makefile
 panels/printers/gnome-printers-panel.desktop.in
 panels/privacy/Makefile
 panels/privacy/gnome-privacy-panel.desktop.in
-panels/network/Makefile
-panels/network/wireless-security/Makefile
-panels/network/connection-editor/Makefile
-panels/network/gnome-network-panel.desktop.in
 panels/notifications/Makefile
 panels/notifications/gnome-notifications-panel.desktop.in
 panels/universal-access/Makefile
@@ -547,8 +537,8 @@ man/Makefile
 AC_OUTPUT
 
 AC_MSG_NOTICE([gnome-control-center was configured with the following options:])
-if test "x$have_networkmanager" = "xyes"; then
-	AC_MSG_NOTICE([** NetworkManager (Network panel)])
+if test "x$have_connman" = "xyes"; then
+	AC_MSG_NOTICE([** ConnMan (Network panel)])
 else
 	AC_MSG_NOTICE([   Network panel disabled])
 fi
