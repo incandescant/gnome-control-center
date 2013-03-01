@@ -27,7 +27,7 @@ SUBDIRS += printers
 endif
 
 if BUILD_NETWORK
-SUBDIRS += network
+SUBDIRS += connman
 endif
 
 if BUILD_BLUETOOTH

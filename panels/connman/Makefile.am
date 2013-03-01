@@ -1,0 +1,39 @@
+cappletname = network
+
+INCLUDES = 						\
+	$(PANEL_CFLAGS)					\
+	$(NETWORK_PANEL_CFLAGS)				\
+	-DGNOMELOCALEDIR="\"$(datadir)/locale\""	\
+	$(NULL)
+
+noinst_LTLIBRARIES = libnetwork.la
+
+BUILT_SOURCES =			\
+	cc-network-resources.c	\
+	cc-network-resources.h
+
+libnetwork_la_SOURCES =					\
+	$(BUILT_SOURCES)				\
+	cc-network-panel.c				\
+	cc-network-panel.h
+
+libnetwork_la_LIBADD = $(PANEL_LIBS)
+
+libnetwork_la_LDFLAGS = $(PANEL_LDFLAGS)
+
+resource_files = $(shell glib-compile-resources --sourcedir=$(srcdir) --generate-dependencies $(srcdir)/network.gresource.xml)
+cc-network-resources.c: network.gresource.xml $(resource_files)
+	$(AM_V_GEN) glib-compile-resources --target=$@ --sourcedir=$(srcdir) --generate-source --c-name cc_network $<
+cc-network-resources.h: network.gresource.xml $(resource_files)
+	$(AM_V_GEN) glib-compile-resources --target=$@ --sourcedir=$(srcdir) --generate-header --c-name cc_network $<
+
+@INTLTOOL_DESKTOP_RULE@
+
+desktopdir = $(datadir)/applications
+desktop_in_files = gnome-network-panel.desktop.in
+desktop_DATA = $(desktop_in_files:.desktop.in=.desktop)
+
+CLEANFILES = $(desktop_in_files) $(desktop_DATA) $(BUILT_SOURCES)
+EXTRA_DIST = $(resource_files) network.gresource.xml
+
+-include $(top_srcdir)/git.mk
