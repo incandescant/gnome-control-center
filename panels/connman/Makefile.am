@@ -14,7 +14,17 @@ BUILT_SOURCES =			\
 	cc-network-resources.c	\
 	cc-network-resources.h
 
+dbus_built_sources =	manager.c manager.h
+
+manager.c: manager.h
+manager.h: Makefile.am manager-interface.xml
+	gdbus-codegen 						\
+		--interface-prefix net.connman.			\
+		--generate-c-code manager 			\
+		$(srcdir)/manager-interface.xml
+
 libnetwork_la_SOURCES =					\
+	$(dbus_built_sources)				\
 	$(BUILT_SOURCES)				\
 	cc-network-panel.c				\
 	cc-network-panel.h
@@ -35,7 +45,7 @@ desktopdir = $(datadir)/applications
 desktop_in_files = gnome-network-panel.desktop.in
 desktop_DATA = $(desktop_in_files:.desktop.in=.desktop)
 
-CLEANFILES = $(desktop_in_files) $(desktop_DATA) $(BUILT_SOURCES)
-EXTRA_DIST = $(resource_files) network.gresource.xml
+CLEANFILES = $(desktop_in_files) $(desktop_DATA) $(BUILT_SOURCES) $(dbus_built_sources)
+EXTRA_DIST = $(resource_files) network.gresource.xml manager-interface.xml
 
 -include $(top_srcdir)/git.mk
