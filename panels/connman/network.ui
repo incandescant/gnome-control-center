@@ -16,6 +16,7 @@
   <object class="GtkWindow" id="network">
     <property name="width_request">740</property>
     <property name="height_request">400</property>
+    <property name="sensitive">False</property>
     <property name="can_focus">False</property>
     <child>
       <object class="GtkVBox" id="vbox1">
@@ -49,7 +50,7 @@
                     <property name="can_focus">False</property>
                     <property name="spacing">2</property>
                     <child>
-                      <object class="GtkImage" id="image1">
+                      <object class="GtkImage" id="icon_status">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                       </object>
@@ -503,7 +504,7 @@
   <object class="GtkSizeGroup" id="sizegroup2">
     <property name="mode">both</property>
     <widgets>
-      <widget name="image1"/>
+      <widget name="icon_status"/>
       <widget name="image2"/>
       <widget name="image3"/>
       <widget name="image4"/>
