@@ -504,6 +504,14 @@ panels/color/icons/256x256/Makefile
 panels/color/icons/scalable/Makefile
 panels/connman/Makefile
 panels/connman/gnome-network-panel.desktop.in
+panels/connman/icons/Makefile
+panels/connman/icons/16x16/Makefile
+panels/connman/icons/22x22/Makefile
+panels/connman/icons/24x24/Makefile
+panels/connman/icons/32x32/Makefile
+panels/connman/icons/48x48/Makefile
+panels/connman/icons/64x64/Makefile
+panels/connman/icons/scalable/Makefile
 panels/printers/Makefile
 panels/printers/gnome-printers-panel.desktop.in
 panels/privacy/Makefile

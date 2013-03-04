@@ -1,3 +1,5 @@
+SUBDIRS = icons
+
 cappletname = network
 
 INCLUDES = 						\
