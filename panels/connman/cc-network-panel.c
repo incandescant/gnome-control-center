@@ -398,6 +398,19 @@ cc_network_panel_init (CcNetworkPanel *panel)
         widget = GTK_WIDGET (WID (priv->builder, "vbox1"));
         gtk_widget_reparent (widget, (GtkWidget *) panel);
 
+        gtk_label_set_text (GTK_LABEL (WID (priv->builder, "label_offline")), _("In-flight Mode"));
+
+        gtk_label_set_text (GTK_LABEL (WID (priv->builder, "label_ethernet")), _("Ethernet"));
+        gtk_label_set_text (GTK_LABEL (WID (priv->builder, "label_wifi")), _("Wireless"));
+        gtk_label_set_text (GTK_LABEL (WID (priv->builder, "label_bluetooth")), _("Bluetooth"));
+        gtk_label_set_text (GTK_LABEL (WID (priv->builder, "label_cellular")), _("Cellular"));
+
+        gtk_button_set_label (GTK_BUTTON (WID (priv->builder, "button_vpn")), _("Add a VPN"));
+        gtk_button_set_label (GTK_BUTTON (WID (priv->builder, "button_hotspot")), _("Create HotSpot"));
+
+        gtk_image_set_from_icon_name (GTK_IMAGE (WID (priv->builder, "image_hotspot")),
+                                      "connman_hotspot", GTK_ICON_SIZE_BUTTON);
+
         g_signal_connect (GTK_SWITCH (WID (priv->builder, "switch_offline")),
                           "notify::active",
                           G_CALLBACK (offline_switch_toggle),

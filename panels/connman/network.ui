@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
   <!-- interface-requires gtk+ 3.0 -->
+  <object class="GtkImage" id="image_hotspot">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="margin_right">5</property>
+    <property name="stock">gtk-missing-image</property>
+  </object>
   <object class="GtkListStore" id="liststore_services">
     <columns>
       <!-- column-name icon -->
@@ -66,7 +72,6 @@
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="xalign">0</property>
-                        <property name="label" translatable="yes">Offline</property>
                         <attributes>
                           <attribute name="font-desc" value="Sans 10"/>
                           <attribute name="weight" value="normal"/>
@@ -94,7 +99,6 @@
                       <object class="GtkLabel" id="label_offline">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">In-Flight mode</property>
                         <attributes>
                           <attribute name="font-desc" value="Sans 10"/>
                           <attribute name="weight" value="light"/>
@@ -162,13 +166,13 @@
                     <property name="orientation">vertical</property>
                     <property name="spacing">10</property>
                     <child>
-                      <object class="GtkBox" id="box5">
+                      <object class="GtkBox" id="box_ethernet">
                         <property name="visible">True</property>
                         <property name="sensitive">False</property>
                         <property name="can_focus">False</property>
                         <property name="valign">center</property>
                         <child>
-                          <object class="GtkImage" id="image2">
+                          <object class="GtkImage" id="image_ethernet">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="icon_name">network-wired-symbolic</property>
@@ -180,11 +184,10 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkLabel" id="label1">
+                          <object class="GtkLabel" id="label_ethernet">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="xalign">0</property>
-                            <property name="label" translatable="yes">Ethernet</property>
                             <attributes>
                               <attribute name="font-desc" value="Sans 10"/>
                               <attribute name="weight" value="ultralight"/>
@@ -198,7 +201,7 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkSwitch" id="switch1">
+                          <object class="GtkSwitch" id="switch_ethernet">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="margin_right">10</property>
@@ -217,13 +220,13 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkBox" id="box6">
+                      <object class="GtkBox" id="box_wifi">
                         <property name="visible">True</property>
                         <property name="sensitive">False</property>
                         <property name="can_focus">False</property>
                         <property name="valign">center</property>
                         <child>
-                          <object class="GtkImage" id="image3">
+                          <object class="GtkImage" id="image_wifi">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="icon_name">network-wireless-signal-excellent-symbolic</property>
@@ -235,11 +238,10 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkLabel" id="label2">
+                          <object class="GtkLabel" id="label_wifi">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="xalign">0</property>
-                            <property name="label" translatable="yes">WiFi</property>
                             <attributes>
                               <attribute name="font-desc" value="Sans 10"/>
                               <attribute name="weight" value="ultralight"/>
@@ -253,7 +255,7 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkSwitch" id="switch2">
+                          <object class="GtkSwitch" id="switch_wifi">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="margin_right">10</property>
@@ -272,13 +274,13 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkBox" id="box7">
+                      <object class="GtkBox" id="box_bluetoot">
                         <property name="visible">True</property>
                         <property name="sensitive">False</property>
                         <property name="can_focus">False</property>
                         <property name="valign">center</property>
                         <child>
-                          <object class="GtkImage" id="image4">
+                          <object class="GtkImage" id="image_bluetooth">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="icon_name">bluetooth-active-symbolic</property>
@@ -290,10 +292,10 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkLabel" id="label3">
+                          <object class="GtkLabel" id="label_bluetooth">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="label" translatable="yes">Bluetooth</property>
+                            <property name="xalign">0</property>
                             <attributes>
                               <attribute name="font-desc" value="Sans 10"/>
                               <attribute name="weight" value="ultralight"/>
@@ -307,7 +309,7 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkSwitch" id="switch3">
+                          <object class="GtkSwitch" id="switch_bluetooth">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="margin_right">10</property>
@@ -326,13 +328,13 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkBox" id="box8">
+                      <object class="GtkBox" id="box_cellular">
                         <property name="visible">True</property>
                         <property name="sensitive">False</property>
                         <property name="can_focus">False</property>
                         <property name="valign">center</property>
                         <child>
-                          <object class="GtkImage" id="image5">
+                          <object class="GtkImage" id="image_cellular">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="icon_name">network-cellular-gprs-symbolic</property>
@@ -344,11 +346,10 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkLabel" id="label4">
+                          <object class="GtkLabel" id="label_cellular">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="xalign">0</property>
-                            <property name="label" translatable="yes">Cellular</property>
                             <attributes>
                               <attribute name="font-desc" value="Sans 10"/>
                               <attribute name="weight" value="ultralight"/>
@@ -362,7 +363,7 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkSwitch" id="switch4">
+                          <object class="GtkSwitch" id="switch_cellular">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="margin_right">10</property>
@@ -388,8 +389,7 @@
                         <property name="vexpand">True</property>
                         <property name="orientation">vertical</property>
                         <child>
-                          <object class="GtkButton" id="button1">
-                            <property name="label" translatable="yes">Configure VPN</property>
+                          <object class="GtkButton" id="button_vpn">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">True</property>
@@ -403,13 +403,14 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkButton" id="button2">
-                            <property name="label" translatable="yes">Create HotSpot</property>
+                          <object class="GtkButton" id="button_hotspot">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">True</property>
                             <property name="valign">end</property>
                             <property name="margin_top">7</property>
+                            <property name="image">image_hotspot</property>
+                            <property name="always_show_image">True</property>
                           </object>
                           <packing>
                             <property name="expand">True</property>
@@ -445,7 +446,7 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkScrolledWindow" id="devices_scrolledwindow">
+                  <object class="GtkScrolledWindow" id="services_scrolledwindow">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="margin_left">30</property>
@@ -495,20 +496,20 @@
     <property name="mode">both</property>
     <widgets>
       <widget name="label_status"/>
-      <widget name="label1"/>
-      <widget name="label2"/>
-      <widget name="label3"/>
-      <widget name="label4"/>
+      <widget name="label_ethernet"/>
+      <widget name="label_wifi"/>
+      <widget name="label_bluetooth"/>
+      <widget name="label_cellular"/>
     </widgets>
   </object>
   <object class="GtkSizeGroup" id="sizegroup2">
     <property name="mode">both</property>
     <widgets>
       <widget name="icon_status"/>
-      <widget name="image2"/>
-      <widget name="image3"/>
-      <widget name="image4"/>
-      <widget name="image5"/>
+      <widget name="image_ethernet"/>
+      <widget name="image_wifi"/>
+      <widget name="image_bluetooth"/>
+      <widget name="image_cellular"/>
     </widgets>
   </object>
 </interface>
