@@ -14,7 +14,8 @@ BUILT_SOURCES =			\
 	cc-network-resources.c	\
 	cc-network-resources.h
 
-dbus_built_sources =	manager.c manager.h
+dbus_built_sources =	manager.c manager.h \
+			technology.c technology.h
 
 manager.c: manager.h
 manager.h: Makefile.am manager-interface.xml
@@ -22,6 +23,13 @@ manager.h: Makefile.am manager-interface.xml
 		--interface-prefix net.connman.			\
 		--generate-c-code manager 			\
 		$(srcdir)/manager-interface.xml
+
+technology.c: technology.h
+technology.h: Makefile.am technology-interface.xml
+	gdbus-codegen 						\
+		--interface-prefix net.connman.			\
+		--generate-c-code technology 			\
+		$(srcdir)/technology-interface.xml
 
 libnetwork_la_SOURCES =					\
 	$(dbus_built_sources)				\
@@ -46,6 +54,6 @@ desktop_in_files = gnome-network-panel.desktop.in
 desktop_DATA = $(desktop_in_files:.desktop.in=.desktop)
 
 CLEANFILES = $(desktop_in_files) $(desktop_DATA) $(BUILT_SOURCES) $(dbus_built_sources)
-EXTRA_DIST = $(resource_files) network.gresource.xml manager-interface.xml
+EXTRA_DIST = $(resource_files) network.gresource.xml manager-interface.xml technology-interface.xml
 
 -include $(top_srcdir)/git.mk
