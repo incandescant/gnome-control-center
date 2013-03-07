@@ -1482,9 +1482,9 @@ activate_service_cb (PanelCellRendererText *cell,
         gtk_tree_path_free (tree_path);
 
         if (!g_strcmp0 (state, "online") || !g_strcmp0 (state, "ready"))
-                service_call_disconnect (service, priv->cancellable, service_connect_cb, service);
+                service_call_disconnect (service, priv->cancellable, service_disconnect_cb, service);
         else if (!g_strcmp0 (state, "idle") || !g_strcmp0 (state, "failure"))
-                service_call_connect (service, priv->cancellable, service_disconnect_cb, service);
+                service_call_connect (service, priv->cancellable, service_connect_cb, service);
 }
 
 static void
