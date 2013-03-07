@@ -28,10 +28,31 @@
 
 #include "cc-network-panel.h"
 #include "cc-network-resources.h"
+#include "panel-cell-renderer-text.h"
+#include "panel-cell-renderer-pixbuf.h"
+
 #include "manager.h"
 #include "technology.h"
+#include "service.h"
 
 #define WID(b, w) (GtkWidget *) gtk_builder_get_object (b, w)
+
+enum {
+  COLUMN_ICON,
+  COLUMN_PULSE,
+  COLUMN_PULSE_ID,
+  COLUMN_NAME,
+  COLUMN_STATE,
+  COLUMN_SECURITY_ICON,
+  COLUMN_SECURITY,
+  COLUMN_TYPE,
+  COLUMN_STRENGTH_ICON,
+  COLUMN_STRENGTH,
+  COLUMN_FAVORITE,
+  COLUMN_GDBUSPROXY,
+  COLUMN_PROP_ID,
+  COLUMN_LAST
+};
 
 enum {
         STATUS_UNAVAILABLE,
@@ -59,6 +80,83 @@ status_to_int (const gchar *status)
                 return STATUS_UNAVAILABLE;
 }
 
+static gboolean cc_service_state_to_icon (const gchar *state)
+{
+        if ((g_strcmp0 (state, "association") == 0) || (g_strcmp0 (state, "configuration") == 0))
+                return TRUE;
+        else
+                return FALSE;
+}
+
+static const gchar *cc_service_security_to_string (const gchar **security)
+{
+        if (security == NULL)
+                return "none";
+        else
+                return security[0];
+}
+
+static const gchar *cc_service_security_to_icon (const gchar **security)
+{
+        if (security == NULL)
+                return NULL;
+        
+        if (!g_strcmp0 (security[0], "none"))
+                return NULL;
+        else if (!g_strcmp0 (security[0], "wep") || !g_strcmp0 (security[0], "wps") || !g_strcmp0 (security[0], "psk"))
+                return "network-wireless-encrypted-symbolic";
+        else if (!g_strcmp0 (security[0], "ieee8021x"))
+                return "connman_corporate";
+        else
+                return NULL;
+}
+
+static const gchar *cc_service_strength_to_string (const gchar *type, const gchar strength)
+{
+        if (!g_strcmp0 (type, "ethernet") || !g_strcmp0 (type, "bluetooth"))
+                return "Excellent";
+
+        if (strength > 80)
+                return "Excellent";
+        else if (strength > 55)
+                return "Good";
+        else if (strength > 30)
+                return "ok";
+        else if (strength > 5)
+                return "weak";
+        else
+                return "n/a";
+}
+
+static const gchar *cc_service_type_to_icon (const gchar *type, gchar strength)
+{
+        if (g_strcmp0 (type, "ethernet") == 0)
+                return "network-wired-symbolic";
+        else if (g_strcmp0 (type, "bluetooth") == 0)
+                return "bluetooth-active-symbolic";
+        else if (g_strcmp0 (type, "wifi") == 0) {
+                if (strength > 80)
+                        return "network-wireless-signal-excellent-symbolic";
+                else if (strength > 55)
+                        return "network-wireless-signal-good-symbolic";
+                else if (strength > 30)
+                        return "network-wireless-signal-ok-symbolic";
+                else
+                        return "network-wireless-signal-weak-symbolic";
+        } else if (g_strcmp0 (type, "cellular") == 0) {
+                if (strength > 80)
+                        return "network-cellular-signal-excellent-symbolic";
+                else if (strength > 55)
+                        return "network-cellular-signal-good-symbolic";
+                else if (strength > 30)
+                        return "network-cellular-signal-ok-symbolic";
+                else
+                        return "network-cellular-signal-weak-symbolic";
+
+        } else
+                return NULL;
+}
+
 CC_PANEL_REGISTER (CcNetworkPanel, cc_network_panel)
 
 #define NETWORK_PANEL_PRIVATE(o) \
@@ -70,27 +168,27 @@ struct _CcNetworkPanelPrivate
 
         GtkBuilder      *builder;
         GCancellable    *cancellable;
-
         Manager         *manager;
 
         gboolean        tech_update;
+        gboolean        serv_update;
 
         Technology      *ethernet;
         gint            ethernet_id;
-
         Technology      *wifi;
         gint            wifi_id;
-
         Technology      *bluetooth;
         gint            bluetooth_id;
-
         Technology      *cellular;
         gint            cellular_id;
 
         gint            tech_added_id;
         gint            tech_removed_id;
         gint            mgr_prop_id;
+        gint            serv_id;
 };
+
+GHashTable *services;
 
 static void
 cc_network_panel_dispose (GObject *object)
@@ -110,6 +208,7 @@ cc_network_panel_dispose (GObject *object)
                 g_signal_handler_disconnect (priv->manager, priv->mgr_prop_id);
                 g_signal_handler_disconnect (priv->manager, priv->tech_added_id);
                 g_signal_handler_disconnect (priv->manager, priv->tech_removed_id);
+                g_signal_handler_disconnect (priv->manager, priv->serv_id);
 
                 g_object_unref (priv->manager);
                 priv->manager = NULL;
@@ -123,7 +222,7 @@ cc_network_panel_dispose (GObject *object)
 static void
 cc_network_panel_finalize (GObject *object)
 {
-        CcNetworkPanel *panel = CC_NETWORK_PANEL (object);
+        //CcNetworkPanel *panel = CC_NETWORK_PANEL (object);
 
         G_OBJECT_CLASS (cc_network_panel_parent_class)->finalize (object);
 }
@@ -881,6 +980,497 @@ manager_technology_removed (Manager *manager,
 
 /* Technology section ends */
 
+static gboolean
+spinner_timeout (gpointer data)
+{
+        const gchar *path  = data;
+
+        GtkTreeRowReference *row;
+        GtkTreeModel *model;
+
+        GtkTreePath *tree_path;
+        GtkTreeIter iter;
+        guint pulse;
+
+        row = g_hash_table_lookup (services, path);
+
+        if (row == NULL)
+                return FALSE;
+
+        model =  gtk_tree_row_reference_get_model (row);
+        tree_path = gtk_tree_row_reference_get_path (row);
+        gtk_tree_model_get_iter (model, &iter, tree_path);
+
+        gtk_tree_model_get (model, &iter, COLUMN_PULSE, &pulse, -1);
+
+        if (pulse == G_MAXUINT)
+                pulse = 0;
+        else
+                pulse++;
+
+        gtk_list_store_set (GTK_LIST_STORE (model),
+                            &iter,
+                            COLUMN_PULSE, pulse,
+                            -1);
+
+        gtk_tree_path_free (tree_path);
+        return TRUE;
+}
+/* Service section ends */
+
+static void
+service_property_changed (Service *service,
+                          const gchar *property,
+                          GVariant *value,
+                          CcNetworkPanel *panel)
+{
+        CcNetworkPanelPrivate *priv = panel->priv;
+        GtkListStore *liststore_services;
+
+        GtkTreeRowReference *row;
+        GtkTreePath *tree_path;
+        GtkTreeIter iter;
+
+        const gchar *path;
+        gchar *type = NULL;
+        gchar strength = 0;
+        const gchar *state;
+        gchar *str;
+
+        gboolean favorite;
+        gint id;
+
+        path = g_dbus_proxy_get_object_path ((GDBusProxy *) service);
+
+        liststore_services = GTK_LIST_STORE (WID (priv->builder, "liststore_services"));
+
+        row = g_hash_table_lookup (services, path);
+
+        if (row == NULL)
+                return;
+
+        tree_path = gtk_tree_row_reference_get_path (row);
+
+        gtk_tree_model_get_iter ((GtkTreeModel *) liststore_services, &iter, tree_path);
+
+        if (!g_strcmp0 (property, "Strength")) {
+                strength = (gchar ) g_variant_get_byte (g_variant_get_variant (value));
+
+                gtk_tree_model_get (GTK_TREE_MODEL (liststore_services), &iter, COLUMN_TYPE, &type, -1);
+
+                gtk_list_store_set (liststore_services,
+                                    &iter,
+                                    COLUMN_STRENGTH, cc_service_strength_to_string (type, strength),
+                                    -1);
+
+                gtk_list_store_set (liststore_services,
+                                    &iter,
+                                    COLUMN_STRENGTH_ICON, cc_service_type_to_icon (type, strength),
+                                    -1);
+        }
+
+        if (!g_strcmp0 (property, "State")) {
+                state = g_variant_get_string (g_variant_get_variant (value), NULL);
+
+                gtk_tree_model_get (GTK_TREE_MODEL (liststore_services), &iter, COLUMN_STATE, &str, -1);
+                g_free (str);
+
+                gtk_list_store_set (liststore_services,
+                                    &iter,
+                                    COLUMN_STATE, g_strdup (state),
+                                    -1);
+
+                gtk_list_store_set (liststore_services,
+                                    &iter,
+                                    COLUMN_ICON, cc_service_state_to_icon (state),
+                                    -1);
+
+                gtk_tree_model_get (GTK_TREE_MODEL (liststore_services), &iter, COLUMN_PULSE_ID, &id, -1);
+                if ((g_strcmp0 (state, "association") == 0) || (g_strcmp0 (state, "configuration") == 0)){
+                        if (id == 0) {
+                                id = g_timeout_add_full (G_PRIORITY_DEFAULT,
+                                                         80,
+                                                         spinner_timeout,
+                                                         g_strdup (path),
+                                                         g_free);
+
+                                gtk_list_store_set (liststore_services,
+                                                    &iter,
+                                                    COLUMN_PULSE_ID, id,
+                                                    COLUMN_PULSE, 0,
+                                                    -1);
+                        }
+                } else {
+                        if (id != 0) {
+                                g_source_remove (id);
+                                gtk_list_store_set (liststore_services,
+                                                    &iter,
+                                                    COLUMN_PULSE_ID, 0,
+                                                    COLUMN_PULSE, 0,
+                                                    -1);
+                        }
+                }
+        }
+
+        if (!g_strcmp0 (property, "Favorite")) {
+                favorite = g_variant_get_boolean (g_variant_get_variant (value));
+
+                gtk_list_store_set (liststore_services,
+                                    &iter,
+                                    COLUMN_FAVORITE, favorite,
+                                    -1);
+        }
+}
+
+static void
+cc_add_service (const gchar         *path,
+                GVariant            *properties,
+                CcNetworkPanel      *panel)
+{
+        CcNetworkPanelPrivate *priv = panel->priv;
+        GError *error = NULL;
+
+        GVariant *value = NULL;
+        GtkListStore *liststore_services;
+        GtkTreeIter iter;
+        GtkTreePath *tree_path;
+        GtkTreeRowReference *row;
+
+        Service *service;
+        const gchar *name;
+        const gchar *state;
+        const gchar **security = NULL;
+        const gchar *type;
+        gint prop_id;
+        gint id;
+
+        gchar strength = 0;
+        gboolean favorite = FALSE;
+
+        /* if found in hash, just update the properties */
+
+        liststore_services = GTK_LIST_STORE (WID (priv->builder, "liststore_services"));
+
+        gtk_list_store_append (liststore_services, &iter);
+
+        value = g_variant_lookup_value (properties, "Name", G_VARIANT_TYPE_STRING);
+        if (value == NULL)
+                name = g_strdup ("Connect to a Hidden Network");
+        else
+                name = g_variant_get_string (value, NULL);
+
+        value = g_variant_lookup_value (properties, "State", G_VARIANT_TYPE_STRING);
+        state = g_variant_get_string (value, NULL);
+
+        value = g_variant_lookup_value (properties, "Type", G_VARIANT_TYPE_STRING);
+        type = g_variant_get_string (value, NULL);
+
+        g_variant_lookup (properties, "Favorite", "b", &favorite);
+
+        if (!g_strcmp0 (type, "wifi")) {
+                value = g_variant_lookup_value (properties, "Security", G_VARIANT_TYPE_STRING_ARRAY);
+                security = g_variant_get_strv (value, NULL);
+
+                value = g_variant_lookup_value (properties, "Strength", G_VARIANT_TYPE_BYTE);
+                strength = (gchar ) g_variant_get_byte (value);
+        }
+
+        service = service_proxy_new_for_bus_sync (G_BUS_TYPE_SYSTEM,
+                                                  G_DBUS_PROXY_FLAGS_NONE,
+                                                  "net.connman",
+                                                  path,
+                                                  priv->cancellable,
+                                                  &error);
+
+        if (error != NULL) {
+                g_warning ("could not get proxy for %s: %s", name,  error->message);
+                g_error_free (error);
+                return;
+        }
+
+
+        prop_id = g_signal_connect (service,
+                                    "property_changed",
+                                    G_CALLBACK (service_property_changed),
+                                    panel);
+
+        gtk_list_store_set (liststore_services,
+                      &iter,
+                      COLUMN_ICON, cc_service_state_to_icon (state),
+                      COLUMN_PULSE, 0,
+                      COLUMN_PULSE_ID, 0,
+                      COLUMN_NAME, g_strdup (name),
+                      COLUMN_STATE, g_strdup (state),
+                      COLUMN_SECURITY_ICON, cc_service_security_to_icon (security),
+                      COLUMN_SECURITY, cc_service_security_to_string (security),
+                      COLUMN_TYPE, g_strdup (type),
+                      COLUMN_STRENGTH_ICON, cc_service_type_to_icon (type, strength),
+                      COLUMN_STRENGTH, cc_service_strength_to_string (type, strength),
+                      COLUMN_FAVORITE, favorite,
+                      COLUMN_GDBUSPROXY, service,
+                      COLUMN_PROP_ID, prop_id,
+                      -1);
+
+        tree_path = gtk_tree_model_get_path ((GtkTreeModel *) liststore_services, &iter);
+
+        row = gtk_tree_row_reference_new ((GtkTreeModel *) liststore_services, tree_path);
+
+        g_hash_table_insert (services,
+                             g_strdup (path),
+                             gtk_tree_row_reference_copy (row));
+
+        gtk_tree_model_get (GTK_TREE_MODEL (liststore_services), &iter, COLUMN_PULSE_ID, &id, -1);
+
+        if ((g_strcmp0 (state, "association") == 0) || (g_strcmp0 (state, "configuration") == 0)){
+                if (id == 0) {
+                        id = g_timeout_add_full (G_PRIORITY_DEFAULT,
+                                                 80,
+                                                 spinner_timeout,
+                                                 g_strdup (path),
+                                                 g_free);
+
+                        gtk_list_store_set (liststore_services,
+                                            &iter,
+                                            COLUMN_PULSE_ID, id,
+                                            COLUMN_PULSE, 0,
+                                            -1);
+                }
+        } else {
+                if (id != 0) {
+                        g_source_remove (id);
+                        gtk_list_store_set (liststore_services,
+                                            &iter,
+                                            COLUMN_PULSE_ID, 0,
+                                            COLUMN_PULSE, 0,
+                                            -1);
+                }
+        }
+
+        gtk_tree_path_free (tree_path);
+        gtk_tree_row_reference_free (row);
+}
+
+static void
+manager_services_changed (Manager *manager,
+                          GVariant *added,
+                          const gchar *const *removed,
+                          CcNetworkPanel *panel)
+{
+        CcNetworkPanelPrivate *priv = panel->priv;
+        GtkListStore *liststore_services;
+        gint i;
+
+        GtkTreeRowReference *row;
+        GtkTreePath *tree_path;
+        GtkTreeIter iter;
+
+        GVariant *array_value, *tuple_value, *properties;
+        GVariantIter array_iter, tuple_iter;
+        gchar *path;
+
+        gint *new_pos;
+        gint elem_size;
+        Service *service;
+        gint prop_id;
+
+        liststore_services = GTK_LIST_STORE (WID (priv->builder, "liststore_services"));
+
+        for (i=0; removed != NULL && removed[i] != NULL; i++) {
+                row = g_hash_table_lookup (services, (gconstpointer *)removed[i]);
+
+                if (row == NULL)
+                        continue;
+
+                tree_path = gtk_tree_row_reference_get_path (row);
+
+                gtk_tree_model_get_iter ((GtkTreeModel *) liststore_services, &iter, tree_path);
+
+                gtk_tree_model_get (GTK_TREE_MODEL (liststore_services), &iter, COLUMN_GDBUSPROXY, &service, COLUMN_PROP_ID, &prop_id, -1);
+
+                g_signal_handler_disconnect (service, prop_id);
+
+                gtk_list_store_remove (liststore_services, &iter);
+
+                g_hash_table_remove (services, removed[i]);
+
+                gtk_tree_path_free (tree_path);
+        }
+
+        g_variant_iter_init (&array_iter, added);
+
+        elem_size = (gint)g_variant_iter_n_children (&array_iter);
+        new_pos = (gint *) g_malloc (elem_size * sizeof (gint));
+        i = 0;
+
+        /* Added Services */
+        while ((array_value = g_variant_iter_next_value (&array_iter)) != NULL) {
+                /* tuple_iter is oa{sv} */
+                g_variant_iter_init (&tuple_iter, array_value);
+
+                /* get the object path */
+                tuple_value = g_variant_iter_next_value (&tuple_iter);
+                g_variant_get (tuple_value, "o", &path);
+
+                /* Found a new item, so add it */
+                if (g_hash_table_lookup (services, (gconstpointer *)path) == NULL) {
+                        /* get the Properties */
+                        properties = g_variant_iter_next_value (&tuple_iter);
+
+                        cc_add_service (path, properties, panel);
+                        g_variant_unref (properties);
+                }
+
+                row = g_hash_table_lookup (services, (gconstpointer *) path);
+                
+                if (row == NULL) {
+                        g_printerr ("\nSomething bad bad happened here!");
+                        return;
+                }
+
+                tree_path = gtk_tree_row_reference_get_path (row);
+                gint *old_pos = gtk_tree_path_get_indices (tree_path);
+                new_pos[i] = old_pos[0];
+                i++;
+
+                gtk_tree_path_free (tree_path);
+
+                g_free (path);
+                g_variant_unref (array_value);
+                g_variant_unref (tuple_value);
+
+        }
+
+        gtk_list_store_reorder (liststore_services, new_pos);
+
+        g_free (new_pos);
+}
+
+static void
+manager_get_services (GObject        *source,
+                      GAsyncResult   *res,
+                      gpointer       user_data)
+{
+        CcNetworkPanel *panel = user_data;
+        CcNetworkPanelPrivate *priv = panel->priv;
+
+        GError *error;
+        GVariant *result, *array_value, *tuple_value, *properties;
+        GVariantIter array_iter, tuple_iter;
+        gchar *path;
+
+        error = NULL;
+        if (!manager_call_get_services_finish (priv->manager, &result,
+                                               res, &error))
+                {
+                        /* TODO: display any error in a user friendly way */
+                        g_warning ("Could not get services: %s", error->message);
+                        g_error_free (error);
+                        return;
+                }
+
+        /* Result is  (a(oa{sv}))*/
+
+        g_variant_iter_init (&array_iter, result);
+
+        while ((array_value = g_variant_iter_next_value (&array_iter)) != NULL) {
+                /* tuple_iter is oa{sv} */
+                g_variant_iter_init (&tuple_iter, array_value);
+
+                /* get the object path */
+                tuple_value = g_variant_iter_next_value (&tuple_iter);
+                g_variant_get (tuple_value, "o", &path);
+
+                /* get the Properties */
+                properties = g_variant_iter_next_value (&tuple_iter);
+
+                cc_add_service (path, properties, panel);
+
+                g_free (path);
+
+                g_variant_unref (array_value);
+                g_variant_unref (tuple_value);
+                g_variant_unref (properties);
+        }
+
+        /* if (priv->serv_update) { */
+        /*         priv->serv_update = FALSE; */
+        /*         manager_call_get_services (priv->manager, priv->cancellable, manager_get_services, panel); */
+
+}
+
+static void
+service_connect_cb (GObject *source_object,
+                    GAsyncResult *res,
+                    gpointer user_data)
+{
+        GError *error = NULL;
+        Service *service = user_data;
+
+        service_call_connect_finish (service, res, &error);
+        if (error != NULL) {
+                g_warning ("Couldn't Connect to service: %s", error->message);
+                g_error_free (error);
+                return;
+        }
+}
+
+static void
+service_disconnect_cb (GObject *source_object,
+                    GAsyncResult *res,
+                    gpointer user_data)
+{
+        GError *error = NULL;
+        Service *service = user_data;
+
+        service_call_disconnect_finish (service, res, &error);
+        if (error != NULL) {
+                g_warning ("Couldn't Disconnect from service: %s", error->message);
+                g_error_free (error);
+                return;
+        }
+}
+
+static void
+activate_service_cb (PanelCellRendererText *cell,
+                     const gchar *path,
+                     CcNetworkPanel *panel)
+{
+        CcNetworkPanelPrivate *priv;
+        GtkListStore *liststore_services;
+
+        GtkTreePath *tree_path;
+        GtkTreeIter iter;
+        Service *service;
+        gchar *state;
+
+        priv = NETWORK_PANEL_PRIVATE (panel);
+
+        liststore_services = GTK_LIST_STORE (WID (priv->builder, "liststore_services"));
+
+        tree_path = gtk_tree_path_new_from_string (path);
+ 
+        gtk_tree_model_get_iter ((GtkTreeModel *) liststore_services, &iter, tree_path);
+
+        gtk_tree_model_get (GTK_TREE_MODEL (liststore_services), &iter, COLUMN_GDBUSPROXY, &service, COLUMN_STATE, &state, -1);
+
+        gtk_tree_path_free (tree_path);
+
+        if (!g_strcmp0 (state, "online") || !g_strcmp0 (state, "ready"))
+                service_call_disconnect (service, priv->cancellable, service_connect_cb, service);
+        else if (!g_strcmp0 (state, "idle") || !g_strcmp0 (state, "failure"))
+                service_call_connect (service, priv->cancellable, service_disconnect_cb, service);
+}
+
+static void
+activate_settings_cb (PanelCellRendererPixbuf *cell,
+                      const gchar *path,
+                      CcNetworkPanel *panel)
+{
+        g_printerr ("%s settings clicked\n", path);
+}
+
+/* Service section ends */
+
 static void
 on_manager_property_changed (Manager *manager,
                              const gchar *property,
@@ -960,6 +1550,9 @@ manager_created_cb (GObject *source_object,
                 return;
         }
 
+        priv->tech_update = FALSE;
+        priv->serv_update = FALSE;
+
         priv->mgr_prop_id = g_signal_connect (priv->manager, "property_changed",
                           G_CALLBACK (on_manager_property_changed), panel);
 
@@ -972,6 +1565,11 @@ manager_created_cb (GObject *source_object,
                                                   G_CALLBACK (manager_technology_removed), panel);
 
         manager_call_get_technologies (priv->manager, priv->cancellable, manager_get_technologies, panel);
+
+        priv->serv_id = g_signal_connect (priv->manager, "services_changed",
+                                          G_CALLBACK (manager_services_changed), panel);
+
+        manager_call_get_services (priv->manager, priv->cancellable, manager_get_services, panel);
 }
 
 static void
@@ -1027,7 +1625,134 @@ connman_disappeared_cb (GDBusConnection *connection,
                 g_object_unref (priv->manager);
                 priv->manager = NULL;
         }
+}
 
+static void
+set_service_name (GtkTreeViewColumn *col,
+                  GtkCellRenderer   *renderer,
+                  GtkTreeModel      *model,
+                  GtkTreeIter       *iter,
+                  gpointer           user_data)
+{
+        gboolean fav;
+        const gchar *name, *uniname;
+        const gchar *state;
+
+        gtk_tree_model_get (model, iter, COLUMN_FAVORITE, &fav, -1);
+        gtk_tree_model_get (model, iter, COLUMN_NAME, &name, -1);
+        gtk_tree_model_get (model, iter, COLUMN_STATE, &state, -1);
+
+        if ((g_strcmp0 (state, "ready") == 0) || (g_strcmp0 (state, "online") == 0))
+                uniname =  g_strdup_printf ("%s \u2713", name);
+        else
+                uniname = name;
+
+        if (fav) {
+                g_object_set (renderer,
+                      "weight", PANGO_WEIGHT_BOLD,
+                      "weight-set", TRUE,
+                      "text", uniname,
+                      NULL);
+        } else {
+                g_object_set (renderer,
+                      "weight", PANGO_WEIGHT_ULTRALIGHT,
+                      "weight-set", TRUE,
+                      "text", uniname,
+                      NULL);
+        }
+}
+
+static void
+cc_setup_service_columns (CcNetworkPanel *panel)
+{
+        CcNetworkPanelPrivate *priv;
+
+        GtkCellRenderer *renderer1;
+        GtkCellRenderer *renderer2;
+        GtkCellRenderer *renderer3;
+        GtkCellRenderer *renderer4;
+        GtkCellRenderer *renderer5;
+        GtkTreeViewColumn *column;
+        GtkCellArea *area;
+
+        priv =  NETWORK_PANEL_PRIVATE (panel);
+
+        column = GTK_TREE_VIEW_COLUMN (WID (priv->builder, "treeview_list_column"));
+        area = gtk_cell_layout_get_area (GTK_CELL_LAYOUT (column));
+
+
+        /* Column1 : Spinner (Online/Ready) */
+        renderer1 = gtk_cell_renderer_spinner_new ();
+
+        gtk_cell_layout_pack_start (GTK_CELL_LAYOUT (column), renderer1, FALSE);
+        gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT (column), renderer1, "active", COLUMN_ICON, "pulse", COLUMN_PULSE, NULL);
+
+        gtk_cell_area_cell_set (area, renderer1, "align", TRUE, NULL);
+
+        /* Column2 : Type(with strength) */
+        renderer2 = gtk_cell_renderer_pixbuf_new ();
+
+        gtk_cell_layout_pack_start (GTK_CELL_LAYOUT (column), renderer2, FALSE);
+        gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT (column), renderer2, "icon-name", COLUMN_STRENGTH_ICON, NULL);
+        g_object_set (renderer2,
+                      "follow-state", TRUE,
+                      "xpad", 1,
+                      "ypad", 6,
+                      NULL);
+
+        gtk_cell_area_cell_set (area, renderer2, "align", TRUE, NULL);
+
+        /* Column3 : The Name */
+        renderer3 = panel_cell_renderer_text_new ();
+        g_object_set (renderer3,
+                      "mode", GTK_CELL_RENDERER_MODE_ACTIVATABLE,
+                      "ellipsize", PANGO_ELLIPSIZE_END,
+                      NULL);
+        gtk_cell_layout_pack_start (GTK_CELL_LAYOUT (column), renderer3, TRUE);
+
+        gtk_tree_view_column_set_cell_data_func (column, renderer3, set_service_name, NULL, NULL);
+
+        gtk_cell_area_cell_set (area, renderer3,
+                                "align", TRUE,
+                                "expand", TRUE,
+                                NULL);
+
+        g_signal_connect (renderer3, "activate",
+                          G_CALLBACK (activate_service_cb), panel);
+
+        /* Column4 : Security */
+        renderer4 = gtk_cell_renderer_pixbuf_new ();
+
+        gtk_cell_layout_pack_start (GTK_CELL_LAYOUT (column), renderer4, FALSE);
+        gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT (column), renderer4, "icon-name", COLUMN_SECURITY_ICON, NULL);
+        g_object_set (renderer4,
+                      "follow-state", TRUE,
+                      "xpad", 6,
+                      "ypad", 6,
+                      NULL);
+
+        gtk_cell_area_cell_set (area, renderer4, "align", TRUE, NULL);
+
+        /* Column5 : Security */
+        renderer5 = panel_cell_renderer_pixbuf_new ();
+        gtk_cell_layout_pack_start (GTK_CELL_LAYOUT (column), renderer5, FALSE);
+        g_object_set (renderer5,
+                      "mode", GTK_CELL_RENDERER_MODE_ACTIVATABLE,
+                      "follow-state", TRUE,
+                      "visible", TRUE,
+                      "icon-name", "connman_settings",
+                      "xpad", 10,
+                      "ypad", 6,
+                      NULL);
+
+        gtk_cell_area_cell_set (area, renderer5, "align", TRUE, NULL);
+
+        g_signal_connect (renderer5, "activate",
+                          G_CALLBACK (activate_settings_cb), panel);
+
+        gtk_cell_area_add_focus_sibling (area, renderer3, renderer1);
+        gtk_cell_area_add_focus_sibling (area, renderer3, renderer2);
+        gtk_cell_area_add_focus_sibling (area, renderer3, renderer4);
 }
 
 static void
@@ -1092,6 +1817,14 @@ cc_network_panel_init (CcNetworkPanel *panel)
                           "notify::active",
                           G_CALLBACK (cc_cellular_switch_toggle),
                           panel);
+
+        services = g_hash_table_new_full (g_str_hash,
+                                                g_str_equal,
+                                                (GDestroyNotify) g_free,
+                                                (GDestroyNotify) gtk_tree_row_reference_free
+                                                );
+
+        cc_setup_service_columns (panel);
 
         priv->watch_id = g_bus_watch_name (G_BUS_TYPE_SYSTEM,
                                            "net.connman",
