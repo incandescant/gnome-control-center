@@ -316,13 +316,13 @@ network_set_status (CcNetworkPanel *panel, gint status)
                 gtk_image_set_from_icon_name (GTK_IMAGE (WID (priv->builder, "icon_status")),
                                       "connman_noconn",
                                       GTK_ICON_SIZE_BUTTON);
-                gtk_label_set_text (GTK_LABEL (WID (priv->builder, "label_status")), _("Idle"));
+                gtk_label_set_text (GTK_LABEL (WID (priv->builder, "label_status")), _("Not Connected"));
                 break;
         case STATUS_CONNECTING:
                 gtk_image_set_from_icon_name (GTK_IMAGE (WID (priv->builder, "icon_status")),
                                       "connman_conn",
                                       GTK_ICON_SIZE_BUTTON);
-                gtk_label_set_text (GTK_LABEL (WID (priv->builder, "label_status")), _("Connecting..."));
+                gtk_label_set_text (GTK_LABEL (WID (priv->builder, "label_status")), _("Connecting"));
                 break;
         case STATUS_READY:
                 gtk_image_set_from_icon_name (GTK_IMAGE (WID (priv->builder, "icon_status")),
