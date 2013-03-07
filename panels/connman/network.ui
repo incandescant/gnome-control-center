@@ -530,7 +530,6 @@
   <object class="GtkSizeGroup" id="sizegroup1">
     <property name="mode">both</property>
     <widgets>
-      <widget name="label_status"/>
       <widget name="label_ethernet"/>
       <widget name="label_wifi"/>
       <widget name="label_bluetooth"/>
