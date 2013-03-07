@@ -1125,7 +1125,9 @@ service_property_changed (Service *service,
                                                     -1);
                         }
 
-                        if ((g_strcmp0 (state, "failure") == 0) || (g_strcmp0 (state, "disconnect") == 0))
+                        if (status_to_int (state) > priv->global_state)
+                                network_set_status (panel, status_to_int (state));
+                        else
                                 network_set_status (panel, priv->global_state);
                 }
         }
@@ -1264,8 +1266,10 @@ cc_add_service (const gchar         *path,
                                             COLUMN_PULSE, 0,
                                             -1);
                 }
-                if ((g_strcmp0 (state, "failure") == 0) || (g_strcmp0 (state, "disconnect") == 0))
-                        network_set_status (panel, priv->global_state);
+                        if (status_to_int (state) > priv->global_state)
+                                network_set_status (panel, status_to_int (state));
+                        else
+                                network_set_status (panel, priv->global_state);
         }
 
         gtk_tree_path_free (tree_path);
