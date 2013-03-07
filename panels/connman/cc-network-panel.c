@@ -169,6 +169,7 @@ struct _CcNetworkPanelPrivate
         GtkBuilder      *builder;
         GCancellable    *cancellable;
         Manager         *manager;
+        gint            global_state;
 
         gboolean        tech_update;
         gboolean        serv_update;
@@ -1086,8 +1087,10 @@ service_property_changed (Service *service,
                                     -1);
 
                 gtk_tree_model_get (GTK_TREE_MODEL (liststore_services), &iter, COLUMN_PULSE_ID, &id, -1);
-                if ((g_strcmp0 (state, "association") == 0) || (g_strcmp0 (state, "configuration") == 0)){
+                if ((g_strcmp0 (state, "association") == 0) || (g_strcmp0 (state, "configuration") == 0)) {
                         if (id == 0) {
+                                network_set_status (panel, STATUS_CONNECTING);
+
                                 id = g_timeout_add_full (G_PRIORITY_DEFAULT,
                                                          80,
                                                          spinner_timeout,
@@ -1109,6 +1112,9 @@ service_property_changed (Service *service,
                                                     COLUMN_PULSE, 0,
                                                     -1);
                         }
+
+                        if ((g_strcmp0 (state, "failure") == 0) || (g_strcmp0 (state, "disconnect") == 0))
+                                network_set_status (panel, priv->global_state);
                 }
         }
 
@@ -1221,8 +1227,10 @@ cc_add_service (const gchar         *path,
 
         gtk_tree_model_get (GTK_TREE_MODEL (liststore_services), &iter, COLUMN_PULSE_ID, &id, -1);
 
-        if ((g_strcmp0 (state, "association") == 0) || (g_strcmp0 (state, "configuration") == 0)){
+        if ((g_strcmp0 (state, "association") == 0) || (g_strcmp0 (state, "configuration") == 0)) {
                 if (id == 0) {
+                        network_set_status (panel, STATUS_CONNECTING);
+
                         id = g_timeout_add_full (G_PRIORITY_DEFAULT,
                                                  80,
                                                  spinner_timeout,
@@ -1244,6 +1252,8 @@ cc_add_service (const gchar         *path,
                                             COLUMN_PULSE, 0,
                                             -1);
                 }
+                if ((g_strcmp0 (state, "failure") == 0) || (g_strcmp0 (state, "disconnect") == 0))
+                        network_set_status (panel, priv->global_state);
         }
 
         gtk_tree_path_free (tree_path);
@@ -1493,7 +1503,8 @@ on_manager_property_changed (Manager *manager,
 
         if (!g_strcmp0 (property, "State")) {
                 state = g_variant_get_string (var, NULL);
-                network_set_status (panel, status_to_int (state));
+                priv->global_state = status_to_int (state);
+                network_set_status (panel, priv->global_state);
         }
 }
 
@@ -1528,7 +1539,9 @@ manager_get_properties(GObject      *source,
 
         value = g_variant_lookup_value (result, "State", G_VARIANT_TYPE_STRING);
         state = g_variant_get_string (value, NULL);
-        network_set_status (panel, status_to_int (state));
+
+        priv->global_state = status_to_int (state);
+        network_set_status (panel, priv->global_state);
 }
 
 static void
