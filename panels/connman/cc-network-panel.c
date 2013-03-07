@@ -377,6 +377,9 @@ ethernet_set_powered (GObject      *source,
         GError *error = NULL;
         gint err_code;
 
+        if (!priv->ethernet)
+                return;
+
         if (!technology_call_set_property_finish (priv->ethernet, res, &error)) {
                 err_code = error->code;
 
@@ -504,6 +507,9 @@ wifi_set_powered (GObject      *source,
         gboolean powered;
         GError *error = NULL;
         gint err_code;
+
+        if (!priv->wifi)
+                return;
 
         if (!technology_call_set_property_finish (priv->wifi, res, &error)) {
                 err_code = error->code;
@@ -633,6 +639,9 @@ bluetooth_set_powered (GObject      *source,
         GError *error = NULL;
         gint err_code;
 
+        if (!priv->bluetooth)
+                return;
+
         if (!technology_call_set_property_finish (priv->bluetooth, res, &error)) {
                 err_code = error->code;
 
@@ -760,6 +769,9 @@ cellular_set_powered (GObject      *source,
         gboolean powered;
         GError *error = NULL;
         gint err_code;
+
+        if (!priv->cellular)
+                return;
 
         if (!technology_call_set_property_finish (priv->cellular, res, &error)) {
                 err_code = error->code;
@@ -1658,7 +1670,7 @@ set_service_name (GtkTreeViewColumn *col,
         if ((g_strcmp0 (state, "ready") == 0) || (g_strcmp0 (state, "online") == 0))
                 uniname =  g_strdup_printf ("%s \u2713", name);
         else
-                uniname = name;
+                uniname = g_strdup (name);
 
         if (fav) {
                 g_object_set (renderer,
@@ -1673,6 +1685,8 @@ set_service_name (GtkTreeViewColumn *col,
                       "text", uniname,
                       NULL);
         }
+
+        g_free (uniname);
 }
 
 static void
