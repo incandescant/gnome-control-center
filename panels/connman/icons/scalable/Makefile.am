@@ -11,6 +11,7 @@ icons_DATA = 	connman_bt.svg \
 		connman_eth.svg \
 		connman_hotspot.svg \
 		connman_noconn.svg \
+		connman_unavailable.svg \
 		connman_offline.svg \
 		connman_online.svg \
 		connman_security.svg \

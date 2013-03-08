@@ -303,13 +303,13 @@ network_set_status (CcNetworkPanel *panel, gint status)
         switch (status) {
         case STATUS_UNAVAILABLE:
                 gtk_image_set_from_icon_name (GTK_IMAGE (WID (priv->builder, "icon_status")),
-                                      "connman_offline",
+                                      "connman_unavailable",
                                       GTK_ICON_SIZE_BUTTON);
                 gtk_label_set_text (GTK_LABEL (WID (priv->builder, "label_status")), _("Unavailable"));
                 break;
         case STATUS_OFFLINE:
                 gtk_image_set_from_icon_name (GTK_IMAGE (WID (priv->builder, "icon_status")),
-                                      "connman_noconn",
+                                      "connman_offline",
                                       GTK_ICON_SIZE_BUTTON);
                 gtk_label_set_text (GTK_LABEL (WID (priv->builder, "label_status")), _("In-flight mode"));
                 break;
