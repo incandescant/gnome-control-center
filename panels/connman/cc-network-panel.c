@@ -352,6 +352,46 @@ network_set_status (CcNetworkPanel *panel, gint status)
         }
 }
 
+static void
+panel_set_scan_cb (GObject      *source,
+                   GAsyncResult *res,
+                   gpointer      user_data)
+{
+        CcNetworkPanel *panel = user_data;
+        CcNetworkPanelPrivate *priv = panel->priv;
+        GError *error = NULL;
+        gint err_code;
+
+        if (!priv->wifi)
+                return;
+
+        if (!technology_call_scan_finish (priv->wifi, res, &error)) {
+                err_code = error->code;
+
+                /* Reset the switch if error is not AlreadyEnabled/AlreadyDisabled */
+                if (err_code != 36)
+                        g_warning ("Could not set scan wifi: %s", error->message);
+
+                g_error_free (error);
+                return;
+        }
+}
+
+static void
+panel_set_scan (CcNetworkPanel *panel)
+{
+        CcNetworkPanelPrivate *priv;
+        priv = NETWORK_PANEL_PRIVATE (panel);
+
+        if (!priv->wifi)
+                return;
+
+        technology_call_scan (priv->wifi,
+                              priv->cancellable,
+                              panel_set_scan_cb,
+                              panel);
+}
+
 /* Technology section starts */
 /* Ethernet section starts*/
 static void
@@ -1388,6 +1428,7 @@ manager_get_services (GObject        *source,
         GVariant *result, *array_value, *tuple_value, *properties;
         GVariantIter array_iter, tuple_iter;
         gchar *path;
+        gint size;
 
         error = NULL;
         if (!manager_call_get_services_finish (priv->manager, &result,
@@ -1402,6 +1443,10 @@ manager_get_services (GObject        *source,
         /* Result is  (a(oa{sv}))*/
 
         g_variant_iter_init (&array_iter, result);
+
+        size = (gint)g_variant_iter_n_children (&array_iter);
+        if (size == 0)
+                panel_set_scan (panel);
 
         while ((array_value = g_variant_iter_next_value (&array_iter)) != NULL) {
                 /* tuple_iter is oa{sv} */
@@ -1422,6 +1467,9 @@ manager_get_services (GObject        *source,
                 g_variant_unref (tuple_value);
                 g_variant_unref (properties);
         }
+
+        if (size < 2)
+                panel_set_scan (panel);
 
         /* if (priv->serv_update) { */
         /*         priv->serv_update = FALSE; */
@@ -1490,6 +1538,9 @@ activate_service_cb (PanelCellRendererText *cell,
                 service_call_disconnect (service, priv->cancellable, service_disconnect_cb, service);
         else if (!g_strcmp0 (state, "idle") || !g_strcmp0 (state, "failure"))
                 service_call_connect (service, priv->cancellable, service_connect_cb, service);
+
+        if (!g_strcmp0 (state, "failure"))
+                panel_set_scan (panel);
 }
 
 static void
@@ -1530,9 +1581,9 @@ on_manager_property_changed (Manager *manager,
 }
 
 static void
-manager_get_properties(GObject      *source,
-                       GAsyncResult *res,
-                       gpointer      user_data)
+manager_get_properties (GObject      *source,
+                        GAsyncResult *res,
+                        gpointer      user_data)
 {
         CcNetworkPanel *panel = user_data;
         CcNetworkPanelPrivate *priv = panel->priv;
