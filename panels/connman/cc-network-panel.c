@@ -76,6 +76,10 @@ status_to_int (const gchar *status)
                 return STATUS_READY;
         else if (g_strcmp0 (status , "online") == 0)
                 return STATUS_ONLINE;
+        else if (g_strcmp0 (status , "failure") == 0)
+                return STATUS_IDLE;
+        else if ((g_strcmp0 (status, "association") == 0) || (g_strcmp0 (status, "configuration") == 0))
+                return STATUS_CONNECTING;
         else
                 return STATUS_UNAVAILABLE;
 }
@@ -1366,9 +1370,10 @@ manager_services_changed (Manager *manager,
 
         }
 
-        gtk_list_store_reorder (liststore_services, new_pos);
-
-        g_free (new_pos);
+        if (new_pos) {
+                gtk_list_store_reorder (liststore_services, new_pos);
+                g_free (new_pos);
+        }
 }
 
 static void
