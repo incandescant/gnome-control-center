@@ -407,7 +407,7 @@ ethernet_property_changed (Technology *ethernet,
                 powered  = g_variant_get_boolean (g_variant_get_variant (value));
 
                 gtk_switch_set_active (GTK_SWITCH (WID (priv->builder, "switch_ethernet")), powered);
-  }
+        }
 }
 
 static void
@@ -538,7 +538,7 @@ wifi_property_changed (Technology *wifi,
                 powered  = g_variant_get_boolean (g_variant_get_variant (value));
 
                 gtk_switch_set_active (GTK_SWITCH (WID (priv->builder, "switch_wifi")), powered);
-  }
+        }
 }
 
 static void
@@ -669,7 +669,7 @@ bluetooth_property_changed (Technology *bluetooth,
                 powered  = g_variant_get_boolean (g_variant_get_variant (value));
 
                 gtk_switch_set_active (GTK_SWITCH (WID (priv->builder, "switch_bluetooth")), powered);
-  }
+        }
 }
 
 static void
@@ -800,7 +800,7 @@ cellular_property_changed (Technology *cellular,
                 powered  = g_variant_get_boolean (g_variant_get_variant (value));
 
                 gtk_switch_set_active (GTK_SWITCH (WID (priv->builder, "switch_cellular")), powered);
-  }
+        }
 }
 
 static void
@@ -1169,7 +1169,7 @@ service_property_changed (Service *service,
                                                     -1);
                         }
 
-                        if (!g_strcmp0 (state, "failure"))
+                        if (!g_strcmp0 (state, "failure") || !g_strcmp0 (state, "idle"))
                                 network_set_status (panel, priv->global_state);
                 }
         }
@@ -1339,6 +1339,7 @@ manager_services_changed (Manager *manager,
         gint elem_size;
         Service *service;
         gint prop_id;
+        gchar *state;
 
         liststore_services = GTK_LIST_STORE (WID (priv->builder, "liststore_services"));
 
@@ -1352,9 +1353,18 @@ manager_services_changed (Manager *manager,
 
                 gtk_tree_model_get_iter ((GtkTreeModel *) liststore_services, &iter, tree_path);
 
-                gtk_tree_model_get (GTK_TREE_MODEL (liststore_services), &iter, COLUMN_GDBUSPROXY, &service, COLUMN_PROP_ID, &prop_id, -1);
+                gtk_tree_model_get (GTK_TREE_MODEL (liststore_services),
+                                    &iter,
+                                    COLUMN_GDBUSPROXY, &service,
+                                    COLUMN_PROP_ID, &prop_id,
+                                    COLUMN_STATE, &state,
+                                    -1);
 
                 g_signal_handler_disconnect (service, prop_id);
+
+                if ((g_strcmp0 (state, "association") == 0) || (g_strcmp0 (state, "configuration") == 0))
+                        network_set_status (panel, priv->global_state);
+                g_free (state);
 
                 gtk_list_store_remove (liststore_services, &iter);
 
@@ -1411,6 +1421,9 @@ manager_services_changed (Manager *manager,
                 gtk_list_store_reorder (liststore_services, new_pos);
                 g_free (new_pos);
         }
+
+        /* Since we dont have a scan button on our UI, send a scan command */
+        panel_set_scan (panel);
 }
 
 static void
