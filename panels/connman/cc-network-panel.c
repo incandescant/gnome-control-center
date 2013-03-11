@@ -210,10 +210,14 @@ cc_network_panel_dispose (GObject *object)
         priv->watch_id = 0;
 
         if (priv->manager) {
-                g_signal_handler_disconnect (priv->manager, priv->mgr_prop_id);
-                g_signal_handler_disconnect (priv->manager, priv->tech_added_id);
-                g_signal_handler_disconnect (priv->manager, priv->tech_removed_id);
-                g_signal_handler_disconnect (priv->manager, priv->serv_id);
+                if (priv->mgr_prop_id)
+                        g_signal_handler_disconnect (priv->manager, priv->mgr_prop_id);
+                if (priv->tech_added_id)
+                        g_signal_handler_disconnect (priv->manager, priv->tech_added_id);
+                if (priv->tech_removed_id)
+                        g_signal_handler_disconnect (priv->manager, priv->tech_removed_id);
+                if (priv->serv_id)
+                        g_signal_handler_disconnect (priv->manager, priv->serv_id);
 
                 g_object_unref (priv->manager);
                 priv->manager = NULL;
@@ -1714,9 +1718,15 @@ connman_disappeared_cb (GDBusConnection *connection,
         gtk_widget_set_sensitive (widget, FALSE);
 
         if (priv->manager) {
-                g_signal_handlers_disconnect_by_func (priv->manager,
-                                                      on_manager_property_changed,
-                                                      panel);
+                if (priv->mgr_prop_id)
+                        g_signal_handler_disconnect (priv->manager, priv->mgr_prop_id);
+                if (priv->tech_added_id)
+                        g_signal_handler_disconnect (priv->manager, priv->tech_added_id);
+                if (priv->tech_removed_id)
+                        g_signal_handler_disconnect (priv->manager, priv->tech_removed_id);
+                if (priv->serv_id)
+                        g_signal_handler_disconnect (priv->manager, priv->serv_id);
+
                 g_object_unref (priv->manager);
                 priv->manager = NULL;
         }
