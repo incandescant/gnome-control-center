@@ -474,7 +474,6 @@ cc_add_technology_ethernet (const gchar         *path,
         CcNetworkPanelPrivate *priv = panel->priv;
 
         GError *error = NULL;
-        GVariant *value = NULL;
         gboolean powered;
 
         if (priv->ethernet == NULL) {
@@ -501,10 +500,8 @@ cc_add_technology_ethernet (const gchar         *path,
                 priv->tech_update = TRUE;
         }
 
-        value = g_variant_lookup_value (properties, "Powered", G_VARIANT_TYPE_BOOLEAN);
-        powered = g_variant_get_boolean (value);
-
-        gtk_switch_set_active (GTK_SWITCH (WID (priv->builder, "switch_ethernet")), powered);
+        if (g_variant_lookup (properties, "Powered", "b", &powered))
+                gtk_switch_set_active (GTK_SWITCH (WID (priv->builder, "switch_ethernet")), powered);
 }
 
 static void
@@ -605,7 +602,6 @@ cc_add_technology_wifi (const gchar         *path,
         CcNetworkPanelPrivate *priv = panel->priv;
 
         GError *error = NULL;
-        GVariant *value = NULL;
         gboolean powered;
 
         if (priv->wifi == NULL) {
@@ -632,10 +628,8 @@ cc_add_technology_wifi (const gchar         *path,
                 priv->tech_update = TRUE;
         }
 
-        value = g_variant_lookup_value (properties, "Powered", G_VARIANT_TYPE_BOOLEAN);
-        powered = g_variant_get_boolean (value);
-
-        gtk_switch_set_active (GTK_SWITCH (WID (priv->builder, "switch_wifi")), powered);
+        if (g_variant_lookup (properties, "Powered", "b", &powered))
+                gtk_switch_set_active (GTK_SWITCH (WID (priv->builder, "switch_wifi")), powered);
 }
 
 static void
@@ -736,7 +730,6 @@ cc_add_technology_bluetooth (const gchar         *path,
         CcNetworkPanelPrivate *priv = panel->priv;
 
         GError *error = NULL;
-        GVariant *value = NULL;
         gboolean powered;
 
         if (priv->bluetooth == NULL) {
@@ -763,10 +756,8 @@ cc_add_technology_bluetooth (const gchar         *path,
                 priv->tech_update = TRUE;
         }
 
-        value = g_variant_lookup_value (properties, "Powered", G_VARIANT_TYPE_BOOLEAN);
-        powered = g_variant_get_boolean (value);
-
-        gtk_switch_set_active (GTK_SWITCH (WID (priv->builder, "switch_bluetooth")), powered);
+        if (g_variant_lookup (properties, "Powered", "b", &powered))
+                gtk_switch_set_active (GTK_SWITCH (WID (priv->builder, "switch_bluetooth")), powered);
 }
 
 static void
@@ -867,7 +858,6 @@ cc_add_technology_cellular (const gchar         *path,
         CcNetworkPanelPrivate *priv = panel->priv;
 
         GError *error = NULL;
-        GVariant *value = NULL;
         gboolean powered;
 
         if (priv->cellular == NULL) {
@@ -894,10 +884,8 @@ cc_add_technology_cellular (const gchar         *path,
                 priv->tech_update = TRUE;
         }
 
-        value = g_variant_lookup_value (properties, "Powered", G_VARIANT_TYPE_BOOLEAN);
-        powered = g_variant_get_boolean (value);
-
-        gtk_switch_set_active (GTK_SWITCH (WID (priv->builder, "switch_cellular")), powered);
+        if (g_variant_lookup (properties, "Powered", "b", &powered))
+                gtk_switch_set_active (GTK_SWITCH (WID (priv->builder, "switch_cellular")), powered);
 }
 
 static void
@@ -926,11 +914,13 @@ cc_add_technology (const gchar          *path,
                    GVariant             *properties,
                    CcNetworkPanel       *panel)
 {
-        GVariant *value = NULL;
         const gchar *type;
+        gboolean ret;
 
-        value = g_variant_lookup_value (properties, "Type", G_VARIANT_TYPE_STRING);
-        type = g_variant_get_string (value, NULL);
+        ret = g_variant_lookup (properties, "Type", "s", &type);
+
+        if (!ret)
+                return;
 
         if (!g_strcmp0 (type, "ethernet")) {
                 cc_add_technology_ethernet (path, properties, panel);
