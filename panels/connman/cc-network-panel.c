@@ -175,6 +175,8 @@ struct _CcNetworkPanelPrivate
         Manager         *manager;
         gint            global_state;
 
+        gboolean        offlinemode;
+
         gboolean        tech_update;
         gboolean        serv_update;
 
@@ -264,9 +266,9 @@ cc_network_panel_class_init (CcNetworkPanelClass *klass)
 }
 
 static void
-manager_set_offlinemode(GObject      *source,
-                        GAsyncResult *res,
-                        gpointer      user_data)
+manager_set_offlinemode (GObject      *source,
+                         GAsyncResult *res,
+                         gpointer      user_data)
 {
         CcNetworkPanel *panel = user_data;
         CcNetworkPanelPrivate *priv = panel->priv;
@@ -299,6 +301,10 @@ offline_switch_toggle (GtkSwitch *sw,
         GVariant *value;
 
         offline = gtk_switch_get_active (sw);
+
+        if (priv->offlinemode == offline)
+                return;
+
         value = g_variant_new_boolean (offline);
 
         manager_call_set_property (priv->manager,
@@ -1613,6 +1619,7 @@ on_manager_property_changed (Manager *manager,
 
         if (!g_strcmp0 (property, "OfflineMode")) {
                 offlinemode = g_variant_get_boolean (var);
+                priv->offlinemode = offlinemode;
                 gtk_switch_set_active (GTK_SWITCH (WID (priv->builder, "switch_offline")), offlinemode);
         }
 
@@ -1649,6 +1656,8 @@ manager_get_properties (GObject      *source,
 
         value = g_variant_lookup_value (result, "OfflineMode", G_VARIANT_TYPE_BOOLEAN);
         offlinemode = g_variant_get_boolean (value);
+
+        priv->offlinemode = offlinemode;
 
         gtk_switch_set_active (GTK_SWITCH (WID (priv->builder, "switch_offline")), offlinemode);
 
