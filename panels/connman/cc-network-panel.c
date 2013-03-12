@@ -180,12 +180,19 @@ struct _CcNetworkPanelPrivate
 
         Technology      *ethernet;
         gint            ethernet_id;
+        gboolean        ethernet_powered;
+
         Technology      *wifi;
         gint            wifi_id;
+        gboolean        wifi_powered;
+
         Technology      *bluetooth;
         gint            bluetooth_id;
+        gboolean        bluetooth_powered;
+
         Technology      *cellular;
         gint            cellular_id;
+        gboolean        cellular_powered;
 
         gint            tech_added_id;
         gint            tech_removed_id;
@@ -410,6 +417,8 @@ ethernet_property_changed (Technology *ethernet,
         if (!g_strcmp0 (property, "Powered")) {
                 powered  = g_variant_get_boolean (g_variant_get_variant (value));
 
+                priv->ethernet_powered = powered;
+
                 gtk_switch_set_active (GTK_SWITCH (WID (priv->builder, "switch_ethernet")), powered);
         }
 }
@@ -456,6 +465,10 @@ cc_ethernet_switch_toggle (GtkSwitch *sw,
                 return;
 
         powered = gtk_switch_get_active (sw);
+
+        if (priv->ethernet_powered == powered)
+                return;
+
         value = g_variant_new_boolean (powered);
 
         technology_call_set_property (priv->ethernet,
@@ -500,8 +513,10 @@ cc_add_technology_ethernet (const gchar         *path,
                 priv->tech_update = TRUE;
         }
 
-        if (g_variant_lookup (properties, "Powered", "b", &powered))
+        if (g_variant_lookup (properties, "Powered", "b", &powered)) {
+                priv->ethernet_powered = powered;
                 gtk_switch_set_active (GTK_SWITCH (WID (priv->builder, "switch_ethernet")), powered);
+        }
 }
 
 static void
@@ -537,6 +552,8 @@ wifi_property_changed (Technology *wifi,
 
         if (!g_strcmp0 (property, "Powered")) {
                 powered  = g_variant_get_boolean (g_variant_get_variant (value));
+
+                priv->wifi_powered = powered;
 
                 gtk_switch_set_active (GTK_SWITCH (WID (priv->builder, "switch_wifi")), powered);
         }
@@ -584,6 +601,10 @@ cc_wifi_switch_toggle (GtkSwitch *sw,
                 return;
 
         powered = gtk_switch_get_active (sw);
+
+        if (priv->wifi_powered == powered)
+                return;
+
         value = g_variant_new_boolean (powered);
 
         technology_call_set_property (priv->wifi,
@@ -628,8 +649,10 @@ cc_add_technology_wifi (const gchar         *path,
                 priv->tech_update = TRUE;
         }
 
-        if (g_variant_lookup (properties, "Powered", "b", &powered))
+        if (g_variant_lookup (properties, "Powered", "b", &powered)) {
+                priv->wifi_powered = powered;
                 gtk_switch_set_active (GTK_SWITCH (WID (priv->builder, "switch_wifi")), powered);
+        }
 }
 
 static void
@@ -665,6 +688,8 @@ bluetooth_property_changed (Technology *bluetooth,
 
         if (!g_strcmp0 (property, "Powered")) {
                 powered  = g_variant_get_boolean (g_variant_get_variant (value));
+
+                priv->bluetooth_powered = powered;
 
                 gtk_switch_set_active (GTK_SWITCH (WID (priv->builder, "switch_bluetooth")), powered);
         }
@@ -712,6 +737,10 @@ cc_bluetooth_switch_toggle (GtkSwitch *sw,
                 return;
 
         powered = gtk_switch_get_active (sw);
+
+        if (priv->bluetooth_powered == powered)
+                return;
+
         value = g_variant_new_boolean (powered);
 
         technology_call_set_property (priv->bluetooth,
@@ -756,8 +785,10 @@ cc_add_technology_bluetooth (const gchar         *path,
                 priv->tech_update = TRUE;
         }
 
-        if (g_variant_lookup (properties, "Powered", "b", &powered))
+        if (g_variant_lookup (properties, "Powered", "b", &powered)) {
+                priv->bluetooth_powered = powered;
                 gtk_switch_set_active (GTK_SWITCH (WID (priv->builder, "switch_bluetooth")), powered);
+        }
 }
 
 static void
@@ -793,6 +824,8 @@ cellular_property_changed (Technology *cellular,
 
         if (!g_strcmp0 (property, "Powered")) {
                 powered  = g_variant_get_boolean (g_variant_get_variant (value));
+
+                priv->cellular_powered = powered;
 
                 gtk_switch_set_active (GTK_SWITCH (WID (priv->builder, "switch_cellular")), powered);
         }
@@ -840,6 +873,10 @@ cc_cellular_switch_toggle (GtkSwitch *sw,
                 return;
 
         powered = gtk_switch_get_active (sw);
+
+        if (priv->cellular_powered == powered)
+                return;
+
         value = g_variant_new_boolean (powered);
 
         technology_call_set_property (priv->cellular,
@@ -884,8 +921,10 @@ cc_add_technology_cellular (const gchar         *path,
                 priv->tech_update = TRUE;
         }
 
-        if (g_variant_lookup (properties, "Powered", "b", &powered))
+        if (g_variant_lookup (properties, "Powered", "b", &powered)) {
+                priv->cellular_powered = powered;
                 gtk_switch_set_active (GTK_SWITCH (WID (priv->builder, "switch_cellular")), powered);
+        }
 }
 
 static void
