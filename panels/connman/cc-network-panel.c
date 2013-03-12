@@ -146,7 +146,7 @@ static const gchar *cc_service_type_to_icon (const gchar *type, gchar strength)
                 else if (strength > 30)
                         return "network-wireless-signal-ok-symbolic";
                 else
-                        return "network-wireless-signal-weak-symbolic";
+                        return "network-wireless-signal-excellent-symbolic";
         } else if (g_strcmp0 (type, "cellular") == 0) {
                 if (strength > 80)
                         return "network-cellular-signal-excellent-symbolic";
@@ -155,8 +155,7 @@ static const gchar *cc_service_type_to_icon (const gchar *type, gchar strength)
                 else if (strength > 30)
                         return "network-cellular-signal-ok-symbolic";
                 else
-                        return "network-cellular-signal-weak-symbolic";
-
+                        return "network-cellular-signal-excellent-symbolic";
         } else
                 return NULL;
 }
