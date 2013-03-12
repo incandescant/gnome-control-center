@@ -1208,8 +1208,7 @@ service_property_changed (Service *service,
                                                     -1);
                         }
 
-                        if (!g_strcmp0 (state, "failure") || !g_strcmp0 (state, "idle"))
-                                network_set_status (panel, priv->global_state);
+                        network_set_status (panel, priv->global_state);
                 }
         }
 
