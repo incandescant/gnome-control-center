@@ -1,9 +1,8 @@
-SUBDIRS = icons
+SUBDIRS = icons connection-editor
 
 cappletname = network
 
-INCLUDES = 						\
-	$(PANEL_CFLAGS)					\
+libnetwork_la_CPPFLAGS =				\
 	$(NETWORK_PANEL_CFLAGS)				\
 	-DGNOMELOCALEDIR="\"$(datadir)/locale\""	\
 	$(NULL)
@@ -49,9 +48,9 @@ libnetwork_la_SOURCES =					\
 	cc-network-panel.c				\
 	cc-network-panel.h
 
-libnetwork_la_LIBADD = $(PANEL_LIBS)
+libnetwork_la_LIBADD = $(NETWORK_PANEL_LIBS) $(builddir)/connection-editor/libconnection-editor.la
 
-libnetwork_la_LDFLAGS = $(PANEL_LDFLAGS)
+libnetwork_la_LDFLAGS = $(NETWORK_PANEL_LDFLAGS)
 
 resource_files = $(shell glib-compile-resources --sourcedir=$(srcdir) --generate-dependencies $(srcdir)/network.gresource.xml)
 cc-network-resources.c: network.gresource.xml $(resource_files)
