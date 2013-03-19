@@ -31,11 +31,19 @@
 #include "panel-cell-renderer-text.h"
 #include "panel-cell-renderer-pixbuf.h"
 
+#include "connection-editor/net-connection-editor.h"
+
 #include "manager.h"
 #include "technology.h"
 #include "service.h"
 
 #define WID(b, w) (GtkWidget *) gtk_builder_get_object (b, w)
+
+static void
+editor_done (NetConnectionEditor *editor,
+             gboolean success,
+             gpointer user_data);
+
 
 enum {
   COLUMN_ICON,
@@ -51,6 +59,8 @@ enum {
   COLUMN_FAVORITE,
   COLUMN_GDBUSPROXY,
   COLUMN_PROP_ID,
+  COLUMN_AUTOCONNECT,
+  COLUMN_EDITOR,
   COLUMN_LAST
 };
 
@@ -1132,7 +1142,7 @@ service_property_changed (Service *service,
         const gchar *state;
         gchar *str;
 
-        gboolean favorite;
+        gboolean favorite, autoconnect;
         gint id;
 
         path = g_dbus_proxy_get_object_path ((GDBusProxy *) service);
@@ -1219,6 +1229,15 @@ service_property_changed (Service *service,
                                     COLUMN_FAVORITE, favorite,
                                     -1);
         }
+
+        if (!g_strcmp0 (property, "AutoConnect")) {
+                autoconnect = g_variant_get_boolean (g_variant_get_variant (value));
+
+                gtk_list_store_set (liststore_services,
+                                    &iter,
+                                    COLUMN_AUTOCONNECT, autoconnect,
+                                    -1);
+        }
 }
 
 static void
@@ -1245,6 +1264,7 @@ cc_add_service (const gchar         *path,
 
         gchar strength = 0;
         gboolean favorite = FALSE;
+        gboolean autoconnect = FALSE;
 
         /* if found in hash, just update the properties */
 
@@ -1265,6 +1285,7 @@ cc_add_service (const gchar         *path,
         type = g_variant_get_string (value, NULL);
 
         g_variant_lookup (properties, "Favorite", "b", &favorite);
+        g_variant_lookup (properties, "AutoConnect", "b", &autoconnect);
 
         if (!g_strcmp0 (type, "wifi")) {
                 value = g_variant_lookup_value (properties, "Security", G_VARIANT_TYPE_STRING_ARRAY);
@@ -1294,21 +1315,22 @@ cc_add_service (const gchar         *path,
                                     panel);
 
         gtk_list_store_set (liststore_services,
-                      &iter,
-                      COLUMN_ICON, cc_service_state_to_icon (state),
-                      COLUMN_PULSE, 0,
-                      COLUMN_PULSE_ID, 0,
-                      COLUMN_NAME, g_strdup (name),
-                      COLUMN_STATE, g_strdup (state),
-                      COLUMN_SECURITY_ICON, cc_service_security_to_icon (security),
-                      COLUMN_SECURITY, cc_service_security_to_string (security),
-                      COLUMN_TYPE, g_strdup (type),
-                      COLUMN_STRENGTH_ICON, cc_service_type_to_icon (type, strength),
-                      COLUMN_STRENGTH, cc_service_strength_to_string (type, strength),
-                      COLUMN_FAVORITE, favorite,
-                      COLUMN_GDBUSPROXY, service,
-                      COLUMN_PROP_ID, prop_id,
-                      -1);
+                            &iter,
+                            COLUMN_ICON, cc_service_state_to_icon (state),
+                            COLUMN_PULSE, 0,
+                            COLUMN_PULSE_ID, 0,
+                            COLUMN_NAME, g_strdup (name),
+                            COLUMN_STATE, g_strdup (state),
+                            COLUMN_SECURITY_ICON, cc_service_security_to_icon (security),
+                            COLUMN_SECURITY, cc_service_security_to_string (security),
+                            COLUMN_TYPE, g_strdup (type),
+                            COLUMN_STRENGTH_ICON, cc_service_type_to_icon (type, strength),
+                            COLUMN_STRENGTH, cc_service_strength_to_string (type, strength),
+                            COLUMN_FAVORITE, favorite,
+                            COLUMN_GDBUSPROXY, service,
+                            COLUMN_PROP_ID, prop_id,
+                            COLUMN_AUTOCONNECT, autoconnect,
+                            -1);
 
         tree_path = gtk_tree_model_get_path ((GtkTreeModel *) liststore_services, &iter);
 
@@ -1367,6 +1389,7 @@ manager_services_changed (Manager *manager,
         GtkTreeRowReference *row;
         GtkTreePath *tree_path;
         GtkTreeIter iter;
+        NetConnectionEditor *editor;
 
         GVariant *array_value, *tuple_value, *properties;
         GVariantIter array_iter, tuple_iter;
@@ -1395,9 +1418,14 @@ manager_services_changed (Manager *manager,
                                     COLUMN_GDBUSPROXY, &service,
                                     COLUMN_PROP_ID, &prop_id,
                                     COLUMN_STATE, &state,
+                                    COLUMN_EDITOR, &editor,
                                     -1);
 
                 g_signal_handler_disconnect (service, prop_id);
+
+                if (editor)
+                        editor_done (editor, TRUE, priv);
+
 
                 if ((g_strcmp0 (state, "association") == 0) || (g_strcmp0 (state, "configuration") == 0))
                         network_set_status (panel, priv->global_state);
@@ -1593,11 +1621,75 @@ activate_service_cb (PanelCellRendererText *cell,
 }
 
 static void
+editor_done (NetConnectionEditor *editor,
+             gboolean success,
+             gpointer user_data)
+{
+        GtkListStore *liststore_services;
+        GtkTreePath *tree_path;
+        GtkTreeIter iter;
+
+        CcNetworkPanelPrivate *priv = user_data;
+
+        if (editor->window)
+                gtk_widget_destroy (editor->window);
+
+        liststore_services = GTK_LIST_STORE (WID (priv->builder, "liststore_services"));
+        tree_path = gtk_tree_row_reference_get_path (editor->service_row);
+
+        gtk_tree_model_get_iter ((GtkTreeModel *) liststore_services, &iter, tree_path);
+
+        gtk_list_store_set (liststore_services, &iter, COLUMN_EDITOR, NULL, -1);
+
+        gtk_tree_path_free (tree_path);
+
+        gtk_tree_row_reference_free (editor->service_row);
+
+        g_object_unref (editor);
+}
+
+static void
 activate_settings_cb (PanelCellRendererPixbuf *cell,
                       const gchar *path,
                       CcNetworkPanel *panel)
 {
-        g_printerr ("%s settings clicked\n", path);
+        CcNetworkPanelPrivate *priv;
+
+        GtkWidget *window;
+        NetConnectionEditor *editor;
+        GtkTreePath *tree_path;
+        GtkTreeIter iter;
+        GtkTreeRowReference *row;
+        GtkListStore *liststore_services;
+
+        priv = NETWORK_PANEL_PRIVATE (panel);
+
+        liststore_services = GTK_LIST_STORE (WID (priv->builder, "liststore_services"));
+
+        tree_path = gtk_tree_path_new_from_string (path);
+        gtk_tree_model_get_iter ((GtkTreeModel *) liststore_services, &iter, tree_path);
+
+        gtk_tree_model_get (GTK_TREE_MODEL (liststore_services), &iter, COLUMN_EDITOR, &editor, -1);
+
+        if (editor) {
+                gtk_window_present (GTK_WINDOW (editor->window));
+
+                gtk_tree_path_free (tree_path);
+                g_object_unref (editor);
+                return;
+        }
+
+        row = gtk_tree_row_reference_new (GTK_TREE_MODEL (liststore_services), tree_path);
+
+        window = cc_shell_get_toplevel (cc_panel_get_shell (CC_PANEL (panel)));
+
+        editor = net_connection_editor_new (GTK_WINDOW (window), row);
+
+        gtk_list_store_set (liststore_services, &iter, COLUMN_EDITOR, editor, -1);
+
+        gtk_tree_path_free (tree_path);
+
+        g_signal_connect (editor, "done", G_CALLBACK (editor_done), priv);
 }
 
 /* Service section ends */
