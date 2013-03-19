@@ -38,9 +38,39 @@ static guint signals[LAST_SIGNAL] = { 0 };
 G_DEFINE_TYPE (NetConnectionEditor, net_connection_editor, G_TYPE_OBJECT)
 
 static void
+cancel_editing (NetConnectionEditor *editor)
+{
+        g_signal_emit (editor, signals[DONE], 0, FALSE);
+}
+
+static void
+apply_edits (NetConnectionEditor *editor)
+{
+}
+
+static void
+selection_changed (GtkTreeSelection *selection, NetConnectionEditor *editor)
+{
+        //GtkWidget *widget;
+        GtkTreeModel *model;
+        GtkTreeIter iter;
+        gint page;
+
+        gtk_tree_selection_get_selected (selection, &model, &iter);
+        gtk_tree_model_get (model, &iter, 1, &page, -1);
+
+        /* g_printerr ("\n %d page selected", page); */
+        /* widget = GTK_WIDGET (gtk_builder_get_object (editor->builder, */
+        /*                                              "details_notebook")); */
+        /* gtk_notebook_set_current_page (GTK_NOTEBOOK (widget), page); */
+}
+
+static void
 net_connection_editor_init (NetConnectionEditor *editor)
 {
         GError *error = NULL;
+        GtkTreeSelection *selection;
+        GtkWidget *button;
 
         editor->builder = gtk_builder_new ();
 
@@ -54,12 +84,21 @@ net_connection_editor_init (NetConnectionEditor *editor)
         }
 
         editor->window = GTK_WIDGET (gtk_builder_get_object (editor->builder, "dialog_ce"));
-}
+        selection = GTK_TREE_SELECTION (gtk_builder_get_object (editor->builder,
+                                                                "treeview-selection"));
+        g_signal_connect (selection, "changed",
+                          G_CALLBACK (selection_changed), editor);
 
-void
-net_connection_editor_run (NetConnectionEditor *editor)
-{
-        net_connection_editor_present (editor);
+        button = GTK_WIDGET (gtk_builder_get_object (editor->builder, "cancel_button"));
+        g_signal_connect_swapped (button, "clicked",
+                                  G_CALLBACK (cancel_editing), editor);
+
+        g_signal_connect_swapped (editor->window, "delete-event",
+                                  G_CALLBACK (cancel_editing), editor);
+
+        button = GTK_WIDGET (gtk_builder_get_object (editor->builder, "apply_button"));
+        g_signal_connect_swapped (button, "clicked",
+                                  G_CALLBACK (apply_edits), editor);
 }
 
 static void
@@ -109,12 +148,9 @@ net_connection_editor_new (GtkWindow *parent_window,
                                               parent_window);
         }
 
-        gtk_window_present (GTK_WINDOW (editor->window));
-        return editor;
-}
+        editor->service_row = row;
 
-void
-net_connection_editor_present (NetConnectionEditor *editor)
-{
         gtk_window_present (GTK_WINDOW (editor->window));
+
+        return editor;
 }

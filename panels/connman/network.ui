@@ -39,6 +39,10 @@
       <column type="GObject"/>
       <!-- column-name prop_id -->
       <column type="gint"/>
+      <!-- column-name autoconnect -->
+      <column type="gboolean"/>
+      <!-- column-name editor -->
+      <column type="GObject"/>
     </columns>
   </object>
   <object class="GtkWindow" id="network">
