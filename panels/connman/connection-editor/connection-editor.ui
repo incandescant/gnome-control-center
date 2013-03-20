@@ -212,7 +212,7 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkLabel" id="label5">
+                      <object class="GtkLabel" id="label_strength">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="halign">start</property>
@@ -366,7 +366,7 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkLabel" id="label12">
+                      <object class="GtkLabel" id="label_link_speed">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="halign">start</property>
@@ -388,7 +388,7 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkLabel" id="label13">
+                      <object class="GtkLabel" id="label_security">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="halign">start</property>
@@ -410,7 +410,7 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkLabel" id="label14">
+                      <object class="GtkLabel" id="label_ipv4_address">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="halign">start</property>
@@ -432,7 +432,7 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkLabel" id="label15">
+                      <object class="GtkLabel" id="label_mac">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="halign">start</property>
@@ -454,7 +454,7 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkLabel" id="label16">
+                      <object class="GtkLabel" id="label_default_route">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="halign">start</property>
@@ -476,7 +476,7 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkLabel" id="label17">
+                      <object class="GtkLabel" id="label_dns">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="halign">start</property>
@@ -498,8 +498,8 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkButton" id="button1">
-                        <property name="label" translatable="yes">Forget Service</property>
+                      <object class="GtkButton" id="button_forget">
+                        <property name="label" translatable="yes">Forget Network</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">True</property>
@@ -581,7 +581,7 @@
     <widgets>
       <widget name="label4"/>
       <widget name="label1"/>
-      <widget name="label5"/>
+      <widget name="label_strength"/>
       <widget name="label6"/>
       <widget name="label7"/>
       <widget name="label8"/>
@@ -594,13 +594,13 @@
     <property name="mode">vertical</property>
     <widgets>
       <widget name="switch_autoconnect"/>
-      <widget name="label5"/>
-      <widget name="label12"/>
-      <widget name="label13"/>
-      <widget name="label14"/>
-      <widget name="label15"/>
-      <widget name="label16"/>
-      <widget name="label17"/>
+      <widget name="label_strength"/>
+      <widget name="label_link_speed"/>
+      <widget name="label_security"/>
+      <widget name="label_ipv4_address"/>
+      <widget name="label_mac"/>
+      <widget name="label_default_route"/>
+      <widget name="label_dns"/>
     </widgets>
   </object>
 </interface>
