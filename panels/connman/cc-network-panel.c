@@ -60,6 +60,9 @@ enum {
   COLUMN_GDBUSPROXY,
   COLUMN_PROP_ID,
   COLUMN_AUTOCONNECT,
+  COLUMN_ETHERNET,
+  COLUMN_IPV4,
+  COLUMN_NAMESERVERS,
   COLUMN_EDITOR,
   COLUMN_LAST
 };
@@ -1143,7 +1146,11 @@ service_property_changed (Service *service,
         gchar *str;
 
         gboolean favorite, autoconnect;
+        GVariant *ethernet, *ipv4, *nameservers;
         gint id;
+
+        NetConnectionEditor *editor;
+        gboolean details = FALSE;
 
         path = g_dbus_proxy_get_object_path ((GDBusProxy *) service);
 
@@ -1172,9 +1179,8 @@ service_property_changed (Service *service,
                                     &iter,
                                     COLUMN_STRENGTH_ICON, cc_service_type_to_icon (type, strength),
                                     -1);
-        }
-
-        if (!g_strcmp0 (property, "State")) {
+                details = TRUE;
+        } else if (!g_strcmp0 (property, "State")) {
                 state = g_variant_get_string (g_variant_get_variant (value), NULL);
 
                 gtk_tree_model_get (GTK_TREE_MODEL (liststore_services), &iter, COLUMN_STATE, &str, -1);
@@ -1219,25 +1225,57 @@ service_property_changed (Service *service,
 
                         network_set_status (panel, priv->global_state);
                 }
-        }
-
-        if (!g_strcmp0 (property, "Favorite")) {
+        } else if (!g_strcmp0 (property, "Favorite")) {
                 favorite = g_variant_get_boolean (g_variant_get_variant (value));
 
                 gtk_list_store_set (liststore_services,
                                     &iter,
                                     COLUMN_FAVORITE, favorite,
                                     -1);
-        }
-
-        if (!g_strcmp0 (property, "AutoConnect")) {
+                details = TRUE;
+        } else if (!g_strcmp0 (property, "AutoConnect")) {
                 autoconnect = g_variant_get_boolean (g_variant_get_variant (value));
 
                 gtk_list_store_set (liststore_services,
                                     &iter,
                                     COLUMN_AUTOCONNECT, autoconnect,
                                     -1);
+                details = TRUE;
+        } else if (!g_strcmp0 (property, "Ethernet")) {
+                ethernet = g_variant_get_variant (value);
+
+                gtk_list_store_set (liststore_services,
+                                    &iter,
+                                    COLUMN_ETHERNET, ethernet,
+                                    -1);
+                details = TRUE;
+        } else if (!g_strcmp0 (property, "IPv4")) {
+                ipv4 = g_variant_get_variant (value);
+
+                gtk_list_store_set (liststore_services,
+                                    &iter,
+                                    COLUMN_IPV4, ipv4,
+                                    -1);
+                details = TRUE;
+        } else if (!g_strcmp0 (property, "Nameservers")) {
+                nameservers = g_variant_get_variant (value);
+
+                gtk_list_store_set (liststore_services,
+                                    &iter,
+                                    COLUMN_NAMESERVERS, nameservers,
+                                    -1);
+                details = TRUE;
+        } else {
+                g_warning ("Unknown property");
+                return;
         }
+
+        gtk_tree_model_get (GTK_TREE_MODEL (liststore_services), &iter, COLUMN_EDITOR, &editor, -1);
+        if (!editor)
+                return;
+
+        if (details)
+                editor_update_details (editor);
 }
 
 static void
@@ -1265,6 +1303,7 @@ cc_add_service (const gchar         *path,
         gchar strength = 0;
         gboolean favorite = FALSE;
         gboolean autoconnect = FALSE;
+        GVariant *ethernet, *ipv4, *nameservers;
 
         /* if found in hash, just update the properties */
 
@@ -1286,6 +1325,10 @@ cc_add_service (const gchar         *path,
 
         g_variant_lookup (properties, "Favorite", "b", &favorite);
         g_variant_lookup (properties, "AutoConnect", "b", &autoconnect);
+
+        ethernet = g_variant_lookup_value (properties, "Ethernet", G_VARIANT_TYPE_DICTIONARY);
+        ipv4 = g_variant_lookup_value (properties, "IPv4", G_VARIANT_TYPE_DICTIONARY);
+        nameservers = g_variant_lookup_value (properties, "Nameservers", G_VARIANT_TYPE_STRING_ARRAY);
 
         if (!g_strcmp0 (type, "wifi")) {
                 value = g_variant_lookup_value (properties, "Security", G_VARIANT_TYPE_STRING_ARRAY);
@@ -1330,6 +1373,9 @@ cc_add_service (const gchar         *path,
                             COLUMN_GDBUSPROXY, service,
                             COLUMN_PROP_ID, prop_id,
                             COLUMN_AUTOCONNECT, autoconnect,
+                            COLUMN_ETHERNET, ethernet,
+                            COLUMN_IPV4, ipv4,
+                            COLUMN_NAMESERVERS, nameservers,
                             -1);
 
         tree_path = gtk_tree_model_get_path ((GtkTreeModel *) liststore_services, &iter);
