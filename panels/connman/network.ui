@@ -41,6 +41,12 @@
       <column type="gint"/>
       <!-- column-name autoconnect -->
       <column type="gboolean"/>
+      <!-- column-name ethernet -->
+      <column type="gpointer"/>
+      <!-- column-name ipv4 -->
+      <column type="gpointer"/>
+      <!-- column-name nameservers -->
+      <column type="gpointer"/>
       <!-- column-name editor -->
       <column type="GObject"/>
     </columns>

@@ -60,6 +60,7 @@ struct _NetConnectionEditorClass
 GType                net_connection_editor_get_type (void);
 NetConnectionEditor *net_connection_editor_new      (GtkWindow          *parent_window,
                                                      GtkTreeRowReference    *row);
+void editor_update_details (NetConnectionEditor *editor);
 
 G_END_DECLS
 
