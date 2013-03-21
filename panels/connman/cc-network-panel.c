@@ -63,6 +63,7 @@ enum {
   COLUMN_ETHERNET,
   COLUMN_IPV4,
   COLUMN_NAMESERVERS,
+  COLUMN_PROXY,
   COLUMN_EDITOR,
   COLUMN_LAST
 };
@@ -1146,11 +1147,12 @@ service_property_changed (Service *service,
         gchar *str;
 
         gboolean favorite, autoconnect;
-        GVariant *ethernet, *ipv4, *nameservers;
+        GVariant *ethernet, *ipv4, *nameservers, *proxy;
         gint id;
 
         NetConnectionEditor *editor;
         gboolean details = FALSE;
+        gboolean update_proxy = FALSE;
 
         path = g_dbus_proxy_get_object_path ((GDBusProxy *) service);
 
@@ -1265,8 +1267,16 @@ service_property_changed (Service *service,
                                     COLUMN_NAMESERVERS, nameservers,
                                     -1);
                 details = TRUE;
+        } else if (!g_strcmp0 (property, "Proxy")) {
+                proxy = g_variant_get_variant (value);
+
+                gtk_list_store_set (liststore_services,
+                                    &iter,
+                                    COLUMN_PROXY, proxy,
+                                    -1);
+                update_proxy = TRUE;
         } else {
-                g_warning ("Unknown property");
+                g_warning ("Unknown property:%s", property);
                 return;
         }
 
@@ -1276,6 +1286,8 @@ service_property_changed (Service *service,
 
         if (details)
                 editor_update_details (editor);
+        if (update_proxy)
+                editor_update_proxy (editor);
 }
 
 static void
@@ -1303,7 +1315,7 @@ cc_add_service (const gchar         *path,
         gchar strength = 0;
         gboolean favorite = FALSE;
         gboolean autoconnect = FALSE;
-        GVariant *ethernet, *ipv4, *nameservers;
+        GVariant *ethernet, *ipv4, *nameservers, *proxy;
 
         /* if found in hash, just update the properties */
 
@@ -1329,6 +1341,7 @@ cc_add_service (const gchar         *path,
         ethernet = g_variant_lookup_value (properties, "Ethernet", G_VARIANT_TYPE_DICTIONARY);
         ipv4 = g_variant_lookup_value (properties, "IPv4", G_VARIANT_TYPE_DICTIONARY);
         nameservers = g_variant_lookup_value (properties, "Nameservers", G_VARIANT_TYPE_STRING_ARRAY);
+        proxy = g_variant_lookup_value (properties, "Proxy", G_VARIANT_TYPE_DICTIONARY);
 
         if (!g_strcmp0 (type, "wifi")) {
                 value = g_variant_lookup_value (properties, "Security", G_VARIANT_TYPE_STRING_ARRAY);
@@ -1376,6 +1389,7 @@ cc_add_service (const gchar         *path,
                             COLUMN_ETHERNET, ethernet,
                             COLUMN_IPV4, ipv4,
                             COLUMN_NAMESERVERS, nameservers,
+                            COLUMN_PROXY, proxy,
                             -1);
 
         tree_path = gtk_tree_model_get_path ((GtkTreeModel *) liststore_services, &iter);
