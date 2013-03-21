@@ -53,6 +53,7 @@ enum {
         COLUMN_ETHERNET,
         COLUMN_IPV4,
         COLUMN_NAMESERVERS,
+        COLUMN_PROXY,
         COLUMN_EDITOR,
         COLUMN_LAST
 };
@@ -61,6 +62,17 @@ static guint signals[LAST_SIGNAL] = { 0 };
 
 G_DEFINE_TYPE (NetConnectionEditor, net_connection_editor, G_TYPE_OBJECT)
 
+static void
+net_connection_editor_update_apply (NetConnectionEditor *editor)
+{
+
+        if (editor->update_proxy)
+                gtk_widget_set_sensitive (GTK_WIDGET (WID (editor->builder, "apply_button")), TRUE);
+        else
+                gtk_widget_set_sensitive (GTK_WIDGET (WID (editor->builder, "apply_button")), FALSE);
+}
+
+/* Details section */
 void
 editor_update_details (NetConnectionEditor *editor)
 {
@@ -90,6 +102,8 @@ editor_update_details (NetConnectionEditor *editor)
                             COLUMN_IPV4, &ipv4,
                             COLUMN_NAMESERVERS, &nameservers,
                             -1);
+
+        net_connection_editor_update_apply (editor);
 
         if (favorite) {
                 gtk_widget_set_sensitive (GTK_WIDGET (WID (editor->builder, "switch_autoconnect")), TRUE);
@@ -265,6 +279,240 @@ forget_service (NetConnectionEditor *editor)
                              service_removed,
                              editor);
 }
+/* Details section Ends */
+
+/* Proxy section */
+
+void
+proxy_setup_entry (NetConnectionEditor *editor, gchar *method)
+{
+        editor->proxy_method = method;
+
+        if (!g_strcmp0 (method, "direct")) {
+                gtk_widget_hide (GTK_WIDGET (WID (editor->builder, "proxy_url")));
+                gtk_widget_hide (GTK_WIDGET (WID (editor->builder, "proxy_servers")));
+                gtk_widget_hide (GTK_WIDGET (WID (editor->builder, "proxy_excludes")));
+
+                gtk_widget_hide (GTK_WIDGET (WID (editor->builder, "label_url")));
+                gtk_widget_hide (GTK_WIDGET (WID (editor->builder, "label_servers")));
+                gtk_widget_hide (GTK_WIDGET (WID (editor->builder, "label_excludes")));
+
+        } else if (!g_strcmp0 (method, "auto")) {
+                gtk_widget_show (GTK_WIDGET (WID (editor->builder, "label_url")));
+                gtk_widget_show (GTK_WIDGET (WID (editor->builder, "proxy_url")));
+
+                gtk_widget_hide (GTK_WIDGET (WID (editor->builder, "label_servers")));
+                gtk_widget_hide (GTK_WIDGET (WID (editor->builder, "proxy_servers")));
+
+                gtk_widget_hide (GTK_WIDGET (WID (editor->builder, "label_excludes")));
+                gtk_widget_hide (GTK_WIDGET (WID (editor->builder, "proxy_excludes")));
+        } else if (!g_strcmp0 (method, "manual")) {
+                gtk_widget_hide (GTK_WIDGET (WID (editor->builder, "label_url")));
+                gtk_widget_hide (GTK_WIDGET (WID (editor->builder, "proxy_url")));
+
+                gtk_widget_show (GTK_WIDGET (WID (editor->builder, "label_servers")));
+                gtk_widget_show (GTK_WIDGET (WID (editor->builder, "proxy_servers")));
+
+                gtk_widget_show (GTK_WIDGET (WID (editor->builder, "label_excludes")));
+                gtk_widget_show (GTK_WIDGET (WID (editor->builder, "proxy_excludes")));
+        } else
+                g_warning ("Unknown method for proxy"); 
+}
+
+static void
+proxy_method_changed (GtkComboBox *combo, gpointer user_data)
+{
+        NetConnectionEditor *editor = user_data;
+        gint active;
+
+        active = gtk_combo_box_get_active (combo);
+        if (active == 0) {
+                proxy_setup_entry (editor, "direct");
+
+                editor->update_proxy = TRUE;
+                net_connection_editor_update_apply (editor);
+        } else if (active == 1) {
+                proxy_setup_entry (editor, "auto");
+
+                editor->update_proxy = TRUE;
+                net_connection_editor_update_apply (editor);
+        } else
+                proxy_setup_entry (editor, "manual");
+}
+
+static void
+proxy_servers_text_changed (NetConnectionEditor *editor)
+{
+        GtkEntry *entry;
+        guint16 len;
+
+        if (g_strcmp0 (editor->proxy_method, "manual") != 0)
+                return;
+
+        entry = GTK_ENTRY (WID (editor->builder, "proxy_servers"));
+
+        len = gtk_entry_get_text_length (entry);
+        if (len == 0)
+                editor->update_proxy = FALSE;
+        else
+                editor->update_proxy = TRUE;
+
+        net_connection_editor_update_apply (editor);
+}
+
+void
+editor_update_proxy (NetConnectionEditor *editor)
+{
+        GtkTreeModel *model;
+
+        GtkTreePath *tree_path;
+        GtkTreeIter iter;
+
+        gboolean ret;
+        gchar *method, *url;
+        gchar **servers, **excludes;
+        GVariant *proxy, *value;
+        guint16 len;
+
+        model =  gtk_tree_row_reference_get_model (editor->service_row);
+        tree_path = gtk_tree_row_reference_get_path (editor->service_row);
+        gtk_tree_model_get_iter (model, &iter, tree_path);
+
+        gtk_tree_model_get (model, &iter,
+                            COLUMN_PROXY, &proxy,
+                            -1);
+
+        ret = g_variant_lookup (proxy, "Method", "s", &method);
+        if (!ret)
+                method = "direct";
+
+        proxy_setup_entry (editor, method);
+
+        if (!g_strcmp0 (method, "direct"))
+                gtk_combo_box_set_active (GTK_COMBO_BOX (WID (editor->builder, "comboboxtext_proxy_method")), 0);
+        else  if (!g_strcmp0 (method, "auto")) {
+                gtk_combo_box_set_active (GTK_COMBO_BOX (WID (editor->builder, "comboboxtext_proxy_method")), 1);
+                g_variant_lookup (proxy, "URL", "s", &url);
+                gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "proxy_url")), url);
+        } else {
+                gtk_combo_box_set_active (GTK_COMBO_BOX (WID (editor->builder, "comboboxtext_proxy_method")), 2);
+
+                value = g_variant_lookup_value (proxy, "Servers", G_VARIANT_TYPE_STRING_ARRAY);
+                servers = g_variant_get_strv (value, NULL);
+
+                value = g_variant_lookup_value (proxy, "Excludes", G_VARIANT_TYPE_STRING_ARRAY);
+                excludes = g_variant_get_strv (value, NULL);
+
+                if (servers != NULL)
+                        gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "proxy_servers")), g_strjoinv (",", (gchar **) servers));
+
+                if (excludes != NULL)
+                        gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "proxy_excludes")), g_strjoinv (",", (gchar **) excludes));
+        }
+
+        editor->update_proxy = FALSE;
+        net_connection_editor_update_apply (editor);
+}
+
+static void
+service_set_proxy (GObject      *source,
+                   GAsyncResult *res,
+                   gpointer      user_data)
+{
+        NetConnectionEditor *editor = user_data;
+        GError *error = NULL;
+
+        GtkTreeModel *model;
+
+        GtkTreePath *tree_path;
+        GtkTreeIter iter;
+        Service *service;
+
+        if (!editor)
+                return;
+
+        model =  gtk_tree_row_reference_get_model (editor->service_row);
+        tree_path = gtk_tree_row_reference_get_path (editor->service_row);
+        gtk_tree_model_get_iter (model, &iter, tree_path);
+
+        gtk_tree_model_get (model, &iter,
+                            COLUMN_GDBUSPROXY, &service,
+                            -1);
+
+        if (!service_call_set_property_finish (service, res, &error)) {
+                g_warning ("Could not set proxy: %s", error->message);
+                g_error_free (error);
+                return;
+        }
+}
+
+static void
+editor_set_proxy (NetConnectionEditor *editor)
+{
+        GtkTreeModel *model;
+
+        GtkTreePath *tree_path;
+        GtkTreeIter iter;
+        Service *service;
+        gint active;
+        GVariantBuilder *proxyconf = g_variant_builder_new (G_VARIANT_TYPE_DICTIONARY);
+        gchar *str;
+        gchar **servers = NULL;
+        gchar **excludes = NULL;
+        GVariant *value;
+
+        model =  gtk_tree_row_reference_get_model (editor->service_row);
+        tree_path = gtk_tree_row_reference_get_path (editor->service_row);
+        gtk_tree_model_get_iter (model, &iter, tree_path);
+
+        gtk_tree_model_get (model, &iter,
+                            COLUMN_GDBUSPROXY, &service,
+                            -1);
+
+
+        active = gtk_combo_box_get_active (GTK_COMBO_BOX (WID (editor->builder, "comboboxtext_proxy_method")));
+        if (active == 0) {
+                g_variant_builder_add (proxyconf,"{sv}", "Method", g_variant_new_string ("direct"));
+        } else if (active == 1) {
+                g_variant_builder_add (proxyconf,"{sv}", "Method", g_variant_new_string ("auto"));
+                str = (gchar *) gtk_entry_get_text (GTK_ENTRY (WID (editor->builder, "proxy_url")));
+                if (str)
+                        g_variant_builder_add (proxyconf,"{sv}", "URL", g_variant_new_string (gtk_entry_get_text (GTK_ENTRY (WID (editor->builder, "proxy_url")))));
+        } else {
+                g_variant_builder_add (proxyconf,"{sv}", "Method", g_variant_new_string ("manual"));
+
+                str = (gchar *) gtk_entry_get_text (GTK_ENTRY (WID (editor->builder, "proxy_servers")));
+                if (str) {
+                        servers = g_strsplit (str, ",", -1);
+                        g_variant_builder_add (proxyconf,"{sv}", "Servers", g_variant_new_strv ((const gchar * const *) servers, -1));
+                }
+
+                str = (gchar *) gtk_entry_get_text (GTK_ENTRY (WID (editor->builder, "proxy_excludes")));
+                if (str) {
+                        excludes = g_strsplit (str, ",", -1);
+                        g_variant_builder_add (proxyconf,"{sv}", "Excludes", g_variant_new_strv ((const gchar * const *) excludes, -1));
+                }
+        }
+
+        value = g_variant_builder_end (proxyconf);
+
+        service_call_set_property (service,
+                                  "Proxy.Configuration",
+                                   g_variant_new_variant (value),
+                                   NULL,
+                                   service_set_proxy,
+                                   editor);
+
+        g_variant_builder_unref (proxyconf);
+ 
+        if (servers)
+                g_strfreev (servers);
+
+        if (excludes)
+                g_strfreev (excludes);
+}
+
+/* Proxy section Ends */
 
 static void
 cancel_editing (NetConnectionEditor *editor)
@@ -275,12 +523,15 @@ cancel_editing (NetConnectionEditor *editor)
 static void
 apply_edits (NetConnectionEditor *editor)
 {
+
+        if (editor->update_proxy)
+               editor_set_proxy (editor);
 }
 
 static void
 selection_changed (GtkTreeSelection *selection, NetConnectionEditor *editor)
 {
-        //GtkWidget *widget;
+        GtkWidget *widget;
         GtkTreeModel *model;
         GtkTreeIter iter;
         gint page;
@@ -288,10 +539,9 @@ selection_changed (GtkTreeSelection *selection, NetConnectionEditor *editor)
         gtk_tree_selection_get_selected (selection, &model, &iter);
         gtk_tree_model_get (model, &iter, 1, &page, -1);
 
-        /* g_printerr ("\n %d page selected", page); */
-        /* widget = GTK_WIDGET (gtk_builder_get_object (editor->builder, */
-        /*                                              "details_notebook")); */
-        /* gtk_notebook_set_current_page (GTK_NOTEBOOK (widget), page); */
+        widget = GTK_WIDGET (gtk_builder_get_object (editor->builder,
+                                                     "details_notebook"));
+        gtk_notebook_set_current_page (GTK_NOTEBOOK (widget), page);
 }
 
 static void
@@ -336,6 +586,16 @@ net_connection_editor_init (NetConnectionEditor *editor)
         button = GTK_WIDGET (gtk_builder_get_object (editor->builder, "button_forget"));
         g_signal_connect_swapped (button, "clicked",
                                   G_CALLBACK (forget_service), editor);
+
+        g_signal_connect (GTK_COMBO_BOX (WID (editor->builder, "comboboxtext_proxy_method")),
+                          "changed",
+                          G_CALLBACK (proxy_method_changed),
+                          editor);
+
+        g_signal_connect_swapped (GTK_ENTRY (WID (editor->builder, "proxy_servers")),
+                                  "notify::text-length",
+                                  G_CALLBACK (proxy_servers_text_changed),
+                                  editor);
 }
 
 static void
@@ -388,6 +648,7 @@ net_connection_editor_new (GtkWindow *parent_window,
         editor->service_row = row;
 
         editor_update_details (editor);
+        editor_update_proxy (editor);
 
         gtk_window_present (GTK_WINDOW (editor->window));
 
