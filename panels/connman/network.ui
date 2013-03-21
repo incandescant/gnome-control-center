@@ -47,6 +47,8 @@
       <column type="gpointer"/>
       <!-- column-name nameservers -->
       <column type="gpointer"/>
+      <!-- column-name proxy -->
+      <column type="gpointer"/>
       <!-- column-name editor -->
       <column type="GObject"/>
     </columns>
