@@ -1153,6 +1153,7 @@ service_property_changed (Service *service,
         NetConnectionEditor *editor;
         gboolean details = FALSE;
         gboolean update_proxy = FALSE;
+        gboolean update_ipv4 = FALSE;
 
         path = g_dbus_proxy_get_object_path ((GDBusProxy *) service);
 
@@ -1259,6 +1260,7 @@ service_property_changed (Service *service,
                                     COLUMN_IPV4, ipv4,
                                     -1);
                 details = TRUE;
+                update_ipv4 = TRUE;
         } else if (!g_strcmp0 (property, "Nameservers")) {
                 nameservers = g_variant_get_variant (value);
 
@@ -1288,6 +1290,8 @@ service_property_changed (Service *service,
                 editor_update_details (editor);
         if (update_proxy)
                 editor_update_proxy (editor);
+        if (update_ipv4)
+                editor_update_ipv4 (editor);
 }
 
 static void

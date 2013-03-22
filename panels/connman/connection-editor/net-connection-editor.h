@@ -50,6 +50,9 @@ struct _NetConnectionEditor
         gboolean update_proxy;
         gchar *proxy_method;
 
+        gboolean update_ipv4;
+        gchar *ipv4_method;
+
         gboolean update_apply;
         GtkTreeRowReference *service_row;
 };
