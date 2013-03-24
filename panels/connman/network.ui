@@ -45,6 +45,8 @@
       <column type="gpointer"/>
       <!-- column-name ipv4 -->
       <column type="gpointer"/>
+      <!-- column-name ipv6 -->
+      <column type="gpointer"/>
       <!-- column-name nameservers -->
       <column type="gpointer"/>
       <!-- column-name proxy -->

@@ -20,6 +20,7 @@
  */
 
 #include "config.h"
+#include <stdlib.h>
 
 #include <glib-object.h>
 #include <glib/gi18n.h>
@@ -52,6 +53,7 @@ enum {
         COLUMN_AUTOCONNECT,
         COLUMN_ETHERNET,
         COLUMN_IPV4,
+        COLUMN_IPV6,
         COLUMN_NAMESERVERS,
         COLUMN_PROXY,
         COLUMN_EDITOR,
@@ -66,7 +68,7 @@ static void
 net_connection_editor_update_apply (NetConnectionEditor *editor)
 {
 
-        if (editor->update_proxy || editor->update_ipv4)
+        if (editor->update_proxy || editor->update_ipv4 || editor->update_ipv6)
                 gtk_widget_set_sensitive (GTK_WIDGET (WID (editor->builder, "apply_button")), TRUE);
         else
                 gtk_widget_set_sensitive (GTK_WIDGET (WID (editor->builder, "apply_button")), FALSE);
@@ -372,7 +374,6 @@ editor_update_proxy (NetConnectionEditor *editor)
         gchar *method, *url;
         gchar **servers, **excludes;
         GVariant *proxy, *value;
-        guint16 len;
 
         model =  gtk_tree_row_reference_get_model (editor->service_row);
         tree_path = gtk_tree_row_reference_get_path (editor->service_row);
@@ -398,10 +399,10 @@ editor_update_proxy (NetConnectionEditor *editor)
                 gtk_combo_box_set_active (GTK_COMBO_BOX (WID (editor->builder, "comboboxtext_proxy_method")), 2);
 
                 value = g_variant_lookup_value (proxy, "Servers", G_VARIANT_TYPE_STRING_ARRAY);
-                servers = g_variant_get_strv (value, NULL);
+                servers = (gchar **) g_variant_get_strv (value, NULL);
 
                 value = g_variant_lookup_value (proxy, "Excludes", G_VARIANT_TYPE_STRING_ARRAY);
-                excludes = g_variant_get_strv (value, NULL);
+                excludes = (gchar **) g_variant_get_strv (value, NULL);
 
                 if (servers != NULL)
                         gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "proxy_servers")), g_strjoinv (",", (gchar **) servers));
@@ -613,7 +614,7 @@ editor_update_ipv4 (NetConnectionEditor *editor)
 
         gboolean ret;
         gchar *method, *address, *netmask, *gateway;
-        GVariant *ipv4, *value;
+        GVariant *ipv4;
 
         model =  gtk_tree_row_reference_get_model (editor->service_row);
         tree_path = gtk_tree_row_reference_get_path (editor->service_row);
@@ -766,6 +767,308 @@ editor_set_ipv4 (NetConnectionEditor *editor)
 
 /* IPv4 section Ends */
 
+/* IPv6 section */
+
+static void
+ipv6_setup_entry (NetConnectionEditor *editor, gchar *method)
+{
+        editor->ipv6_method = method;
+
+        if (!g_strcmp0 (method, "off")) {
+                gtk_widget_hide (GTK_WIDGET (WID (editor->builder, "ipv6_address")));
+                gtk_widget_hide (GTK_WIDGET (WID (editor->builder, "ipv6_prefix")));
+                gtk_widget_hide (GTK_WIDGET (WID (editor->builder, "ipv6_gateway")));
+                gtk_widget_hide (GTK_WIDGET (WID (editor->builder, "comboboxtext_ipv6_privacy")));
+
+                gtk_widget_hide (GTK_WIDGET (WID (editor->builder, "label_ipv6_address")));
+                gtk_widget_hide (GTK_WIDGET (WID (editor->builder, "label_ipv6_prefix")));
+                gtk_widget_hide (GTK_WIDGET (WID (editor->builder, "label_ipv6_gateway")));
+                gtk_widget_hide (GTK_WIDGET (WID (editor->builder, "label_ipv6_privacy")));
+
+                return;
+        } else {
+                gtk_widget_show (GTK_WIDGET (WID (editor->builder, "ipv6_address")));
+                gtk_widget_show (GTK_WIDGET (WID (editor->builder, "ipv6_prefix")));
+                gtk_widget_show (GTK_WIDGET (WID (editor->builder, "ipv6_gateway")));
+                gtk_widget_show (GTK_WIDGET (WID (editor->builder, "comboboxtext_ipv6_privacy")));
+
+                gtk_widget_show (GTK_WIDGET (WID (editor->builder, "label_ipv6_address")));
+                gtk_widget_show (GTK_WIDGET (WID (editor->builder, "label_ipv6_prefix")));
+                gtk_widget_show (GTK_WIDGET (WID (editor->builder, "label_ipv6_gateway")));
+                gtk_widget_show (GTK_WIDGET (WID (editor->builder, "label_ipv6_privacy")));
+        }
+
+        if (!g_strcmp0 (method, "auto") ) {
+                gtk_widget_set_sensitive (GTK_WIDGET (WID (editor->builder, "comboboxtext_ipv6_privacy")), TRUE);
+                gtk_combo_box_set_active (GTK_COMBO_BOX (WID (editor->builder, "comboboxtext_ipv6_privacy")), 0);
+        } else
+                gtk_widget_set_sensitive (GTK_WIDGET (WID (editor->builder, "comboboxtext_ipv6_privacy")), FALSE);
+
+        if (!g_strcmp0 (method, "auto") || !g_strcmp0 (method, "fixed") || !g_strcmp0 (method, "6to4")) {
+                gtk_widget_set_sensitive (GTK_WIDGET (WID (editor->builder, "ipv6_address")), FALSE);
+                gtk_widget_set_sensitive (GTK_WIDGET (WID (editor->builder, "ipv6_prefix")), FALSE);
+                gtk_widget_set_sensitive (GTK_WIDGET (WID (editor->builder, "ipv6_gateway")), FALSE);
+                return;
+        }
+
+        if (!g_strcmp0 (method, "manual")) {
+                gtk_widget_set_sensitive (GTK_WIDGET (WID (editor->builder, "ipv6_address")), TRUE);
+                gtk_widget_set_sensitive (GTK_WIDGET (WID (editor->builder, "ipv6_prefix")), TRUE);
+                gtk_widget_set_sensitive (GTK_WIDGET (WID (editor->builder, "ipv6_gateway")), TRUE);
+        }
+}
+
+static void
+ipv6_method_changed (GtkComboBox *combo, gpointer user_data)
+{
+        NetConnectionEditor *editor = user_data;
+        gint active;
+
+        active = gtk_combo_box_get_active (combo);
+        if (active == 0) {
+                ipv6_setup_entry (editor, "off");
+                editor->update_ipv6 = TRUE;
+                net_connection_editor_update_apply (editor);
+        } else if (active == 1) {
+                ipv6_setup_entry (editor, "auto");
+
+                editor->update_ipv6 = TRUE;
+                net_connection_editor_update_apply (editor);
+        } else if (active == 2) {
+                ipv6_setup_entry (editor, "manual");
+        } else {
+                gtk_combo_box_set_active (GTK_COMBO_BOX (WID (editor->builder, "comboboxtext_ipv6_method")), 0);
+        }
+}
+
+static void
+ipv6_address_text_changed (NetConnectionEditor *editor)
+{
+        GtkEntry *entry;
+        guint16 len1, len2, len3;
+
+        if (g_strcmp0 (editor->ipv6_method, "manual") != 0)
+                return;
+
+        entry = GTK_ENTRY (WID (editor->builder, "ipv6_address"));
+        len1 = gtk_entry_get_text_length (entry);
+
+        entry = GTK_ENTRY (WID (editor->builder, "ipv6_prefix"));
+        len2 = gtk_entry_get_text_length (entry);
+
+        entry = GTK_ENTRY (WID (editor->builder, "ipv6_gateway"));
+        len3 = gtk_entry_get_text_length (entry);
+
+        if (len1 && len2 && len3)
+                editor->update_ipv6 = TRUE;
+        else
+                editor->update_ipv6 = FALSE;
+
+        net_connection_editor_update_apply (editor);
+}
+
+void
+editor_update_ipv6 (NetConnectionEditor *editor)
+{
+        GtkTreeModel *model;
+
+        GtkTreePath *tree_path;
+        GtkTreeIter iter;
+
+        gboolean ret;
+        gchar *method, *address, *gateway, *privacy;
+        GVariant *ipv6;
+        guint8 prefix;
+
+        model =  gtk_tree_row_reference_get_model (editor->service_row);
+        tree_path = gtk_tree_row_reference_get_path (editor->service_row);
+        gtk_tree_model_get_iter (model, &iter, tree_path);
+
+        gtk_tree_model_get (model, &iter,
+                            COLUMN_IPV6, &ipv6,
+                            -1);
+
+        ret = g_variant_lookup (ipv6, "Method", "s", &method);
+        if (!ret)
+                method = "off";
+
+        ipv6_setup_entry (editor, method);
+
+        if (!g_strcmp0 (method, "off"))
+                gtk_combo_box_set_active (GTK_COMBO_BOX (WID (editor->builder, "comboboxtext_ipv6_method")), 0);
+        else if (!g_strcmp0 (method, "auto")) {
+                gtk_combo_box_set_active (GTK_COMBO_BOX (WID (editor->builder, "comboboxtext_ipv6_method")), 1);
+
+                ret = g_variant_lookup (ipv6, "Privacy", "s", &privacy);
+                if (!ret)
+                        privacy = "disabled";
+
+                if (!g_strcmp0 (privacy , "enabled"))
+                        gtk_combo_box_set_active (GTK_COMBO_BOX (WID (editor->builder, "comboboxtext_ipv6_privacy")), 0);
+                else if (!g_strcmp0 (privacy , "prefered"))
+                        gtk_combo_box_set_active (GTK_COMBO_BOX (WID (editor->builder, "comboboxtext_ipv6_privacy")), 2);
+                else
+                        gtk_combo_box_set_active (GTK_COMBO_BOX (WID (editor->builder, "comboboxtext_ipv6_privacy")), 1);
+
+                g_variant_lookup (ipv6, "Address", "s", &address);
+                gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv6_address")), address);
+
+                ret = g_variant_lookup (ipv6, "PrefixLength", "y", &prefix);
+                if (ret)
+                        gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv6_prefix")), g_strdup_printf ("%i", prefix));
+
+                g_variant_lookup (ipv6, "Gateway", "s", &gateway);
+                gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv6_gateway")), gateway);
+        } else if (!g_strcmp0 (method, "manual")) {
+                gtk_combo_box_set_active (GTK_COMBO_BOX (WID (editor->builder, "comboboxtext_ipv6_method")), 2);
+
+                g_variant_lookup (ipv6, "Address", "s", &address);
+                gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv6_address")), address);
+
+                ret = g_variant_lookup (ipv6, "PrefixLength", "y", &prefix);
+                if (ret)
+                        gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv6_prefix")), g_strdup_printf ("%i", prefix));
+
+                g_variant_lookup (ipv6, "Gateway", "s", &gateway);
+                gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv6_gateway")), gateway);
+        } else if (!g_strcmp0 (method, "6to4")) {
+                gtk_combo_box_set_active (GTK_COMBO_BOX (WID (editor->builder, "comboboxtext_ipv6_method")), 3);
+
+                g_variant_lookup (ipv6, "Address", "s", &address);
+                gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv6_address")), address);
+
+                ret = g_variant_lookup (ipv6, "PrefixLength", "y", &prefix);
+                if (ret)
+                        gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv6_prefix")), g_strdup_printf ("%i", prefix));
+
+                g_variant_lookup (ipv6, "Gateway", "s", &gateway);
+                gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv6_gateway")), gateway);
+        } else {
+                gtk_combo_box_set_active (GTK_COMBO_BOX (WID (editor->builder, "comboboxtext_ipv6_method")), 4);
+
+                g_variant_lookup (ipv6, "Address", "s", &address);
+                gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv6_address")), address);
+
+                ret = g_variant_lookup (ipv6, "PrefixLength", "y", &prefix);
+                if (ret)
+                        gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv6_prefix")), g_strdup_printf ("%i", prefix));
+
+                g_variant_lookup (ipv6, "Gateway", "s", &gateway);
+                gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv6_gateway")), gateway);
+        }
+
+        if (!g_strcmp0 (method, "fixed"))
+                gtk_widget_set_sensitive (GTK_WIDGET (WID (editor->builder, "comboboxtext_ipv6_method")), FALSE);
+        else
+                gtk_widget_set_sensitive (GTK_WIDGET (WID (editor->builder, "comboboxtext_ipv6_method")), TRUE);
+
+        editor->update_ipv6 = FALSE;
+        net_connection_editor_update_apply (editor);
+}
+
+static void
+service_set_ipv6 (GObject      *source,
+                  GAsyncResult *res,
+                  gpointer      user_data)
+{
+        NetConnectionEditor *editor = user_data;
+        GError *error = NULL;
+
+        GtkTreeModel *model;
+
+        GtkTreePath *tree_path;
+        GtkTreeIter iter;
+        Service *service;
+
+        if (!editor)
+                return;
+
+        model =  gtk_tree_row_reference_get_model (editor->service_row);
+        tree_path = gtk_tree_row_reference_get_path (editor->service_row);
+        gtk_tree_model_get_iter (model, &iter, tree_path);
+
+        gtk_tree_model_get (model, &iter,
+                            COLUMN_GDBUSPROXY, &service,
+                            -1);
+
+        if (!service_call_set_property_finish (service, res, &error)) {
+                g_warning ("Could not set ipv6: %s", error->message);
+                g_error_free (error);
+                return;
+        }
+}
+
+static void
+editor_set_ipv6 (NetConnectionEditor *editor)
+{
+        GtkTreeModel *model;
+
+        GtkTreePath *tree_path;
+        GtkTreeIter iter;
+        Service *service;
+        gint active, priv;
+        guint8 prefix_length;
+
+        GVariantBuilder *ipv6conf = g_variant_builder_new (G_VARIANT_TYPE_DICTIONARY);
+        gchar *str;
+        GVariant *value;
+
+        model =  gtk_tree_row_reference_get_model (editor->service_row);
+        tree_path = gtk_tree_row_reference_get_path (editor->service_row);
+        gtk_tree_model_get_iter (model, &iter, tree_path);
+
+        gtk_tree_model_get (model, &iter,
+                            COLUMN_GDBUSPROXY, &service,
+                            -1);
+
+        active = gtk_combo_box_get_active (GTK_COMBO_BOX (WID (editor->builder, "comboboxtext_ipv6_method")));
+
+        if (active == 0) {
+                g_variant_builder_add (ipv6conf,"{sv}", "Method", g_variant_new_string ("off"));
+        } else if (active == 1) {
+                g_variant_builder_add (ipv6conf,"{sv}", "Method", g_variant_new_string ("auto"));
+
+                priv = gtk_combo_box_get_active (GTK_COMBO_BOX (WID (editor->builder, "comboboxtext_ipv6_privacy")));
+                if (priv == 0)
+                        str = "disabled";
+                else if (priv == 1)
+                        str = "enabled";
+                else
+                        str = "prefered";
+
+                g_variant_builder_add (ipv6conf,"{sv}", "Privacy", g_variant_new_string (str));
+        } else {
+                g_variant_builder_add (ipv6conf,"{sv}", "Method", g_variant_new_string ("manual"));
+
+                str = (gchar *) gtk_entry_get_text (GTK_ENTRY (WID (editor->builder, "ipv6_address")));
+                g_variant_builder_add (ipv6conf,"{sv}", "Address", g_variant_new_string (str));
+
+                str = (gchar *) gtk_entry_get_text (GTK_ENTRY (WID (editor->builder, "ipv6_prefix")));
+                prefix_length = (guint8) atoi (str);
+                g_variant_builder_add (ipv6conf,"{sv}", "PrefixLength", g_variant_new_byte (prefix_length));
+
+                str = (gchar *) gtk_entry_get_text (GTK_ENTRY (WID (editor->builder, "ipv6_gateway")));
+                g_variant_builder_add (ipv6conf,"{sv}", "Gateway", g_variant_new_string (str));
+        }
+
+        value = g_variant_builder_end (ipv6conf);
+
+        gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv6_address")), "");
+        gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv6_prefix")), "");
+        gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv6_gateway")), "");
+
+        service_call_set_property (service,
+                                  "IPv6.Configuration",
+                                   g_variant_new_variant (value),
+                                   NULL,
+                                   service_set_ipv6,
+                                   editor);
+
+        g_variant_builder_unref (ipv6conf);
+}
+
+/* IPv6 section Ends */
+
 static void
 cancel_editing (NetConnectionEditor *editor)
 {
@@ -780,6 +1083,8 @@ apply_edits (NetConnectionEditor *editor)
                editor_set_proxy (editor);
         if (editor->update_ipv4)
                editor_set_ipv4 (editor);
+        if (editor->update_ipv6)
+               editor_set_ipv6 (editor);
 }
 
 static void
@@ -870,6 +1175,26 @@ net_connection_editor_init (NetConnectionEditor *editor)
                                   "notify::text-length",
                                   G_CALLBACK (ipv4_address_text_changed),
                                   editor);
+
+        g_signal_connect (GTK_COMBO_BOX (WID (editor->builder, "comboboxtext_ipv6_method")),
+                          "changed",
+                          G_CALLBACK (ipv6_method_changed),
+                          editor);
+
+        g_signal_connect_swapped (GTK_ENTRY (WID (editor->builder, "ipv6_address")),
+                                  "notify::text-length",
+                                  G_CALLBACK (ipv6_address_text_changed),
+                                  editor);
+
+        g_signal_connect_swapped (GTK_ENTRY (WID (editor->builder, "ipv6_prefix")),
+                                  "notify::text-length",
+                                  G_CALLBACK (ipv6_address_text_changed),
+                                  editor);
+
+        g_signal_connect_swapped (GTK_ENTRY (WID (editor->builder, "ipv6_gateway")),
+                                  "notify::text-length",
+                                  G_CALLBACK (ipv6_address_text_changed),
+                                  editor);
 }
 
 static void
@@ -924,6 +1249,7 @@ net_connection_editor_new (GtkWindow *parent_window,
         editor_update_details (editor);
         editor_update_proxy (editor);
         editor_update_ipv4 (editor);
+        editor_update_ipv6 (editor);
 
         gtk_window_present (GTK_WINDOW (editor->window));
 
