@@ -53,6 +53,9 @@ struct _NetConnectionEditor
         gboolean update_ipv4;
         gchar *ipv4_method;
 
+        gboolean update_ipv6;
+        gchar *ipv6_method;
+
         gboolean update_apply;
         GtkTreeRowReference *service_row;
 };
@@ -70,7 +73,8 @@ NetConnectionEditor *net_connection_editor_new      (GtkWindow          *parent_
 
 void editor_update_details (NetConnectionEditor *editor);
 void editor_update_proxy (NetConnectionEditor *editor);
-
+void editor_update_ipv4 (NetConnectionEditor *editor);
+void editor_update_ipv6 (NetConnectionEditor *editor);
 G_END_DECLS
 
 #endif /* __NET_CONNECTION_EDITOR_H */
