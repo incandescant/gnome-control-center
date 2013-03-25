@@ -1158,6 +1158,7 @@ service_property_changed (Service *service,
         gboolean update_ipv4 = FALSE;
         gboolean update_ipv6 = FALSE;
         gboolean update_domains = FALSE;
+        gboolean update_nameservers = FALSE;
 
         path = g_dbus_proxy_get_object_path ((GDBusProxy *) service);
 
@@ -1282,6 +1283,7 @@ service_property_changed (Service *service,
                                     COLUMN_NAMESERVERS, nameservers,
                                     -1);
                 details = TRUE;
+                update_nameservers = TRUE;
         } else if (!g_strcmp0 (property, "Domains")) {
                 domains = g_variant_get_variant (value);
 
@@ -1317,6 +1319,8 @@ service_property_changed (Service *service,
                 editor_update_ipv6 (editor);
         if (update_domains)
                 editor_update_domains (editor);
+        if (update_nameservers)
+                editor_update_nameservers (editor);
 }
 
 static void
