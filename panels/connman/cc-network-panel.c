@@ -64,6 +64,7 @@ enum {
         COLUMN_IPV4,
         COLUMN_IPV6,
         COLUMN_NAMESERVERS,
+        COLUMN_DOMAINS,
         COLUMN_PROXY,
         COLUMN_EDITOR,
         COLUMN_LAST
@@ -1148,7 +1149,7 @@ service_property_changed (Service *service,
         gchar *str;
 
         gboolean favorite, autoconnect;
-        GVariant *ethernet, *ipv4, *ipv6, *nameservers, *proxy;
+        GVariant *ethernet, *ipv4, *ipv6, *nameservers, *proxy, *domains;
         gint id;
 
         NetConnectionEditor *editor;
@@ -1156,6 +1157,7 @@ service_property_changed (Service *service,
         gboolean update_proxy = FALSE;
         gboolean update_ipv4 = FALSE;
         gboolean update_ipv6 = FALSE;
+        gboolean update_domains = FALSE;
 
         path = g_dbus_proxy_get_object_path ((GDBusProxy *) service);
 
@@ -1280,6 +1282,14 @@ service_property_changed (Service *service,
                                     COLUMN_NAMESERVERS, nameservers,
                                     -1);
                 details = TRUE;
+        } else if (!g_strcmp0 (property, "Domains")) {
+                domains = g_variant_get_variant (value);
+
+                gtk_list_store_set (liststore_services,
+                                    &iter,
+                                    COLUMN_DOMAINS, domains,
+                                    -1);
+                update_domains = TRUE;
         } else if (!g_strcmp0 (property, "Proxy")) {
                 proxy = g_variant_get_variant (value);
 
@@ -1305,6 +1315,8 @@ service_property_changed (Service *service,
                 editor_update_ipv4 (editor);
         if (update_ipv4)
                 editor_update_ipv6 (editor);
+        if (update_domains)
+                editor_update_domains (editor);
 }
 
 static void
@@ -1332,7 +1344,7 @@ cc_add_service (const gchar         *path,
         gchar strength = 0;
         gboolean favorite = FALSE;
         gboolean autoconnect = FALSE;
-        GVariant *ethernet, *ipv4, *ipv6, *nameservers, *proxy;
+        GVariant *ethernet, *ipv4, *ipv6, *nameservers, *proxy, *domains;
 
         /* if found in hash, just update the properties */
 
@@ -1360,6 +1372,7 @@ cc_add_service (const gchar         *path,
         ipv6 = g_variant_lookup_value (properties, "IPv6", G_VARIANT_TYPE_DICTIONARY);
         nameservers = g_variant_lookup_value (properties, "Nameservers", G_VARIANT_TYPE_STRING_ARRAY);
         proxy = g_variant_lookup_value (properties, "Proxy", G_VARIANT_TYPE_DICTIONARY);
+        domains = g_variant_lookup_value (properties, "Domains", G_VARIANT_TYPE_STRING_ARRAY);
 
         if (!g_strcmp0 (type, "wifi")) {
                 value = g_variant_lookup_value (properties, "Security", G_VARIANT_TYPE_STRING_ARRAY);
@@ -1408,6 +1421,7 @@ cc_add_service (const gchar         *path,
                             COLUMN_IPV4, ipv4,
                             COLUMN_IPV6, ipv6,
                             COLUMN_NAMESERVERS, nameservers,
+                            COLUMN_DOMAINS, domains,
                             COLUMN_PROXY, proxy,
                             -1);
 
