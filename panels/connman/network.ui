@@ -49,6 +49,8 @@
       <column type="gpointer"/>
       <!-- column-name nameservers -->
       <column type="gpointer"/>
+      <!-- column-name domains -->
+      <column type="gpointer"/>
       <!-- column-name proxy -->
       <column type="gpointer"/>
       <!-- column-name editor -->
