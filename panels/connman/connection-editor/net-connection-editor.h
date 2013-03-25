@@ -57,6 +57,7 @@ struct _NetConnectionEditor
         gchar *ipv6_method;
 
         gboolean update_domains;
+        gboolean update_nameservers;
 
         gboolean update_apply;
         GtkTreeRowReference *service_row;
@@ -78,6 +79,7 @@ void editor_update_proxy (NetConnectionEditor *editor);
 void editor_update_ipv4 (NetConnectionEditor *editor);
 void editor_update_ipv6 (NetConnectionEditor *editor);
 void editor_update_domains (NetConnectionEditor *editor);
+void editor_update_nameservers (NetConnectionEditor *editor);
 G_END_DECLS
 
 #endif /* __NET_CONNECTION_EDITOR_H */
