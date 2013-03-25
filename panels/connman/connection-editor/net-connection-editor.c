@@ -55,6 +55,7 @@ enum {
         COLUMN_IPV4,
         COLUMN_IPV6,
         COLUMN_NAMESERVERS,
+        COLUMN_DOMAINS,
         COLUMN_PROXY,
         COLUMN_EDITOR,
         COLUMN_LAST
@@ -68,7 +69,8 @@ static void
 net_connection_editor_update_apply (NetConnectionEditor *editor)
 {
 
-        if (editor->update_proxy || editor->update_ipv4 || editor->update_ipv6)
+        if (editor->update_proxy || editor->update_ipv4 ||
+            editor->update_ipv6 || editor->update_domains)
                 gtk_widget_set_sensitive (GTK_WIDGET (WID (editor->builder, "apply_button")), TRUE);
         else
                 gtk_widget_set_sensitive (GTK_WIDGET (WID (editor->builder, "apply_button")), FALSE);
@@ -145,7 +147,7 @@ editor_update_details (NetConnectionEditor *editor)
         else
                 gtk_label_set_text (GTK_LABEL (WID (editor->builder, "label_default_route")), "N/A");
 
-        ns = g_variant_dup_strv (nameservers, NULL);
+        ns = g_variant_get_strv (nameservers, NULL);
         if (ns && ns[0])
                 gtk_label_set_text (GTK_LABEL (WID (editor->builder, "label_dns")), g_strjoinv (",", (gchar **) ns));
         else
@@ -1066,8 +1068,125 @@ editor_set_ipv6 (NetConnectionEditor *editor)
 
         g_variant_builder_unref (ipv6conf);
 }
-
 /* IPv6 section Ends */
+
+/* Domains section */
+static void
+domains_text_changed (NetConnectionEditor *editor)
+{
+        GtkEntry *entry;
+        guint16 len;
+
+        entry = GTK_ENTRY (WID (editor->builder, "entry_domains"));
+        len = gtk_entry_get_text_length (entry);
+
+        if (len > 0)
+                editor->update_domains = TRUE;
+        else
+                editor->update_domains = FALSE;
+
+        net_connection_editor_update_apply (editor);
+}
+
+void
+editor_update_domains (NetConnectionEditor *editor)
+{
+        GtkTreeModel *model;
+
+        GtkTreePath *tree_path;
+        GtkTreeIter iter;
+
+        gchar **dom;
+        GVariant *domains;
+
+        model =  gtk_tree_row_reference_get_model (editor->service_row);
+        tree_path = gtk_tree_row_reference_get_path (editor->service_row);
+        gtk_tree_model_get_iter (model, &iter, tree_path);
+
+        gtk_tree_model_get (model, &iter,
+                            COLUMN_DOMAINS, &domains,
+                            -1);
+
+        dom = g_variant_get_strv (domains, NULL);
+        if (dom && dom[0])
+                gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "entry_domains")), g_strjoinv (",", (gchar **) dom));
+        else
+                gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "entry_domains")), "");
+
+        editor->update_domains = FALSE;
+        net_connection_editor_update_apply (editor);
+}
+
+static void
+service_set_domains (GObject      *source,
+                     GAsyncResult *res,
+                     gpointer      user_data)
+{
+        NetConnectionEditor *editor = user_data;
+        GError *error = NULL;
+
+        GtkTreeModel *model;
+
+        GtkTreePath *tree_path;
+        GtkTreeIter iter;
+        Service *service;
+
+        if (!editor)
+                return;
+
+        model =  gtk_tree_row_reference_get_model (editor->service_row);
+        tree_path = gtk_tree_row_reference_get_path (editor->service_row);
+        gtk_tree_model_get_iter (model, &iter, tree_path);
+
+        gtk_tree_model_get (model, &iter,
+                            COLUMN_GDBUSPROXY, &service,
+                            -1);
+
+        if (!service_call_set_property_finish (service, res, &error)) {
+                g_warning ("Could not set domains: %s", error->message);
+                g_error_free (error);
+                return;
+        }
+}
+
+static void
+editor_set_domains (NetConnectionEditor *editor)
+{
+        GtkTreeModel *model;
+
+        GtkTreePath *tree_path;
+        GtkTreeIter iter;
+        Service *service;
+
+        gchar *str;
+        gchar **domains = NULL;
+        GVariant *value;
+
+        model =  gtk_tree_row_reference_get_model (editor->service_row);
+        tree_path = gtk_tree_row_reference_get_path (editor->service_row);
+        gtk_tree_model_get_iter (model, &iter, tree_path);
+
+        gtk_tree_model_get (model, &iter,
+                            COLUMN_GDBUSPROXY, &service,
+                            -1);
+
+        str = (gchar *) gtk_entry_get_text (GTK_ENTRY (WID (editor->builder, "entry_domains")));
+        if (str)
+                domains = g_strsplit (str, ",", -1);
+
+        value = g_variant_new_strv ((const gchar * const *) domains, -1);
+
+        gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "entry_domains")), "");
+
+        service_call_set_property (service,
+                                  "Domains.Configuration",
+                                   g_variant_new_variant (value),
+                                   NULL,
+                                   service_set_domains,
+                                   editor);
+}
+
+/* Domains section Ends */
 
 static void
 cancel_editing (NetConnectionEditor *editor)
@@ -1085,6 +1204,8 @@ apply_edits (NetConnectionEditor *editor)
                editor_set_ipv4 (editor);
         if (editor->update_ipv6)
                editor_set_ipv6 (editor);
+        if (editor->update_domains)
+               editor_set_domains (editor);
 }
 
 static void
@@ -1195,6 +1316,11 @@ net_connection_editor_init (NetConnectionEditor *editor)
                                   "notify::text-length",
                                   G_CALLBACK (ipv6_address_text_changed),
                                   editor);
+
+        g_signal_connect_swapped (GTK_ENTRY (WID (editor->builder, "entry_domains")),
+                                  "notify::text-length",
+                                  G_CALLBACK (domains_text_changed),
+                                  editor);
 }
 
 static void
@@ -1250,6 +1376,7 @@ net_connection_editor_new (GtkWindow *parent_window,
         editor_update_proxy (editor);
         editor_update_ipv4 (editor);
         editor_update_ipv6 (editor);
+        editor_update_domains (editor);
 
         gtk_window_present (GTK_WINDOW (editor->window));
 
