@@ -1,4 +1,4 @@
-SUBDIRS = icons connection-editor
+SUBDIRS = icons
 
 cappletname = network
 
@@ -16,6 +16,9 @@ BUILT_SOURCES =			\
 dbus_built_sources =	manager.c manager.h \
 			technology.c technology.h \
 			service.c service.h
+
+connection_editor_sources = 	net-connection-editor.c \
+				net-connection-editor.h
 
 manager.c: manager.h
 manager.h: Makefile.am manager-interface.xml
@@ -46,9 +49,10 @@ libnetwork_la_SOURCES =					\
 	panel-cell-renderer-pixbuf.h 			\
 	panel-cell-renderer-pixbuf.c			\
 	cc-network-panel.c				\
-	cc-network-panel.h
+	cc-network-panel.h				\
+	$(connection_editor_sources)
 
-libnetwork_la_LIBADD = $(NETWORK_PANEL_LIBS) $(builddir)/connection-editor/libconnection-editor.la
+libnetwork_la_LIBADD = $(NETWORK_PANEL_LIBS)
 
 libnetwork_la_LDFLAGS = $(NETWORK_PANEL_LDFLAGS)
 

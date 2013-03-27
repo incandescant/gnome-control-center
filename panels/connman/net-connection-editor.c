@@ -25,9 +25,9 @@
 #include <glib-object.h>
 #include <glib/gi18n.h>
 
-#include "../service.h"
+#include "service.h"
 #include "net-connection-editor.h"
-#include "net-connection-editor-resources.h"
+#include "cc-network-resources.h"
 
 #define WID(b, w) (GtkWidget *) gtk_builder_get_object (b, w)
 
@@ -1467,7 +1467,7 @@ net_connection_editor_class_init (NetConnectionEditorClass *class)
 {
         GObjectClass *object_class = G_OBJECT_CLASS (class);
 
-        g_resources_register (net_connection_editor_get_resource ());
+        g_resources_register (cc_network_get_resource ());
 
         object_class->finalize = net_connection_editor_finalize;
 
