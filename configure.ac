@@ -519,7 +519,6 @@ panels/connman/icons/32x32/Makefile
 panels/connman/icons/48x48/Makefile
 panels/connman/icons/64x64/Makefile
 panels/connman/icons/scalable/Makefile
-panels/connman/connection-editor/Makefile
 panels/printers/Makefile
 panels/printers/gnome-printers-panel.desktop.in
 panels/privacy/Makefile
