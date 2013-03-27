@@ -150,9 +150,6 @@
               <object class="GtkNotebook" id="details_notebook">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
-                <property name="margin_top">20</property>
-                <property name="margin_bottom">20</property>
-                <property name="show_tabs">False</property>
                 <child>
                   <object class="GtkGrid" id="grid_details">
                     <property name="visible">True</property>
@@ -564,11 +561,12 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkLabel" id="label_servers">
+                      <object class="GtkLabel" id="label_url">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="margin_top">7</property>
                         <property name="xalign">0</property>
-                        <property name="label" translatable="yes">Servers</property>
+                        <property name="label" translatable="yes">Proxy URL</property>
                         <attributes>
                           <attribute name="font-desc" value="&lt;Enter Value&gt; 10"/>
                           <attribute name="weight" value="ultralight"/>
@@ -576,7 +574,22 @@
                       </object>
                       <packing>
                         <property name="left_attach">0</property>
-                        <property name="top_attach">1</property>
+                        <property name="top_attach">6</property>
+                        <property name="width">1</property>
+                        <property name="height">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkEntry" id="proxy_url">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="hexpand">True</property>
+                        <property name="invisible_char">●</property>
+                        <property name="invisible_char_set">True</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">7</property>
                         <property name="width">1</property>
                         <property name="height">1</property>
                       </packing>
@@ -585,8 +598,43 @@
                       <object class="GtkLabel" id="label_excludes">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="margin_top">7</property>
                         <property name="xalign">0</property>
                         <property name="label" translatable="yes">Excludes</property>
+                        <attributes>
+                          <attribute name="font-desc" value="&lt;Enter Value&gt; 10"/>
+                          <attribute name="weight" value="ultralight"/>
+                        </attributes>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">4</property>
+                        <property name="width">1</property>
+                        <property name="height">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkEntry" id="proxy_excludes">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="hexpand">True</property>
+                        <property name="invisible_char">●</property>
+                        <property name="invisible_char_set">True</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">5</property>
+                        <property name="width">1</property>
+                        <property name="height">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="label_servers">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="margin_top">7</property>
+                        <property name="xalign">0</property>
+                        <property name="label" translatable="yes">Servers</property>
                         <attributes>
                           <attribute name="font-desc" value="&lt;Enter Value&gt; 10"/>
                           <attribute name="weight" value="ultralight"/>
@@ -605,38 +653,7 @@
                         <property name="can_focus">True</property>
                         <property name="hexpand">True</property>
                         <property name="invisible_char">●</property>
-                      </object>
-                      <packing>
-                        <property name="left_attach">1</property>
-                        <property name="top_attach">1</property>
-                        <property name="width">1</property>
-                        <property name="height">1</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkEntry" id="proxy_excludes">
-                        <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                        <property name="hexpand">True</property>
-                        <property name="invisible_char">●</property>
-                      </object>
-                      <packing>
-                        <property name="left_attach">1</property>
-                        <property name="top_attach">2</property>
-                        <property name="width">1</property>
-                        <property name="height">1</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkLabel" id="label_url">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="xalign">0</property>
-                        <property name="label" translatable="yes">Proxy URL</property>
-                        <attributes>
-                          <attribute name="font-desc" value="&lt;Enter Value&gt; 10"/>
-                          <attribute name="weight" value="ultralight"/>
-                        </attributes>
+                        <property name="invisible_char_set">True</property>
                       </object>
                       <packing>
                         <property name="left_attach">0</property>
@@ -646,25 +663,9 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkEntry" id="proxy_url">
-                        <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                        <property name="hexpand">True</property>
-                        <property name="invisible_char">●</property>
-                        <property name="invisible_char_set">True</property>
-                      </object>
-                      <packing>
-                        <property name="left_attach">1</property>
-                        <property name="top_attach">3</property>
-                        <property name="width">1</property>
-                        <property name="height">1</property>
-                      </packing>
-                    </child>
-                    <child>
                       <object class="GtkComboBoxText" id="comboboxtext_proxy_method">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="halign">start</property>
                         <property name="active">0</property>
                         <property name="entry_text_column">0</property>
                         <property name="id_column">1</property>
@@ -675,8 +676,8 @@
                         </items>
                       </object>
                       <packing>
-                        <property name="left_attach">1</property>
-                        <property name="top_attach">0</property>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">1</property>
                         <property name="width">1</property>
                         <property name="height">1</property>
                       </packing>
@@ -712,7 +713,7 @@
                       <object class="GtkLabel" id="label_ipv4_method">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="xalign">1</property>
+                        <property name="xalign">0</property>
                         <property name="label" translatable="yes">Method </property>
                         <attributes>
                           <attribute name="font-desc" value="&lt;Enter Value&gt; 10"/>
@@ -727,60 +728,11 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkLabel" id="label_ipv4_netmask">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="xalign">1</property>
-                        <property name="label" translatable="yes">Netmask</property>
-                        <attributes>
-                          <attribute name="font-desc" value="&lt;Enter Value&gt; 10"/>
-                          <attribute name="weight" value="ultralight"/>
-                        </attributes>
-                      </object>
-                      <packing>
-                        <property name="left_attach">0</property>
-                        <property name="top_attach">2</property>
-                        <property name="width">1</property>
-                        <property name="height">1</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkEntry" id="ipv4_address">
-                        <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                        <property name="valign">center</property>
-                        <property name="hexpand">True</property>
-                        <property name="invisible_char">●</property>
-                        <property name="invisible_char_set">True</property>
-                      </object>
-                      <packing>
-                        <property name="left_attach">1</property>
-                        <property name="top_attach">1</property>
-                        <property name="width">1</property>
-                        <property name="height">1</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkEntry" id="ipv4_netmask">
-                        <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                        <property name="valign">center</property>
-                        <property name="hexpand">True</property>
-                        <property name="invisible_char">●</property>
-                        <property name="invisible_char_set">True</property>
-                      </object>
-                      <packing>
-                        <property name="left_attach">1</property>
-                        <property name="top_attach">2</property>
-                        <property name="width">1</property>
-                        <property name="height">1</property>
-                      </packing>
-                    </child>
-                    <child>
                       <object class="GtkLabel" id="label_ipv4_gateway">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="xalign">1</property>
+                        <property name="margin_top">7</property>
+                        <property name="xalign">0</property>
                         <property name="label" translatable="yes">Gateway</property>
                         <attributes>
                           <attribute name="font-desc" value="&lt;Enter Value&gt; 10"/>
@@ -789,7 +741,45 @@
                       </object>
                       <packing>
                         <property name="left_attach">0</property>
-                        <property name="top_attach">3</property>
+                        <property name="top_attach">6</property>
+                        <property name="width">1</property>
+                        <property name="height">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="label_ipv4_netmask">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="margin_top">7</property>
+                        <property name="xalign">0</property>
+                        <property name="label" translatable="yes">Netmask</property>
+                        <attributes>
+                          <attribute name="font-desc" value="&lt;Enter Value&gt; 10"/>
+                          <attribute name="weight" value="ultralight"/>
+                        </attributes>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">4</property>
+                        <property name="width">1</property>
+                        <property name="height">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="label_ipv4_addr">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="margin_top">7</property>
+                        <property name="xalign">0</property>
+                        <property name="label" translatable="yes">Address</property>
+                        <attributes>
+                          <attribute name="font-desc" value="&lt;Enter Value&gt; 10"/>
+                          <attribute name="weight" value="ultralight"/>
+                        </attributes>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">2</property>
                         <property name="width">1</property>
                         <property name="height">1</property>
                       </packing>
@@ -804,7 +794,39 @@
                         <property name="invisible_char_set">True</property>
                       </object>
                       <packing>
-                        <property name="left_attach">1</property>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">7</property>
+                        <property name="width">1</property>
+                        <property name="height">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkEntry" id="ipv4_netmask">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="valign">center</property>
+                        <property name="hexpand">True</property>
+                        <property name="invisible_char">●</property>
+                        <property name="invisible_char_set">True</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">5</property>
+                        <property name="width">1</property>
+                        <property name="height">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkEntry" id="ipv4_address">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="valign">center</property>
+                        <property name="hexpand">True</property>
+                        <property name="invisible_char">●</property>
+                        <property name="invisible_char_set">True</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
                         <property name="top_attach">3</property>
                         <property name="width">1</property>
                         <property name="height">1</property>
@@ -814,7 +836,6 @@
                       <object class="GtkComboBoxText" id="comboboxtext_ipv4_method">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="halign">start</property>
                         <property name="active">0</property>
                         <property name="entry_text_column">0</property>
                         <property name="id_column">1</property>
@@ -824,24 +845,6 @@
                           <item>Manual</item>
                           <item translatable="yes">Fixed</item>
                         </items>
-                      </object>
-                      <packing>
-                        <property name="left_attach">1</property>
-                        <property name="top_attach">0</property>
-                        <property name="width">1</property>
-                        <property name="height">1</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkLabel" id="label_ipv4_addr">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="xalign">1</property>
-                        <property name="label" translatable="yes">Address</property>
-                        <attributes>
-                          <attribute name="font-desc" value="&lt;Enter Value&gt; 10"/>
-                          <attribute name="weight" value="ultralight"/>
-                        </attributes>
                       </object>
                       <packing>
                         <property name="left_attach">0</property>
@@ -874,15 +877,31 @@
                     <property name="margin_left">40</property>
                     <property name="margin_right">30</property>
                     <property name="margin_top">20</property>
+                    <property name="margin_bottom">20</property>
                     <property name="hexpand">True</property>
                     <property name="row_spacing">3</property>
                     <property name="column_spacing">9</property>
                     <child>
-                      <object class="GtkLabel" id="label_ipv6_method">
+                      <object class="GtkEntry" id="ipv6_gateway">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="invisible_char">●</property>
+                        <property name="invisible_char_set">True</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">9</property>
+                        <property name="width">1</property>
+                        <property name="height">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="label_ipv6_gateway">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="xalign">1</property>
-                        <property name="label" translatable="yes">Method</property>
+                        <property name="margin_top">8</property>
+                        <property name="xalign">0</property>
+                        <property name="label" translatable="yes">Gateway</property>
                         <attributes>
                           <attribute name="font-desc" value="&lt;Enter Value&gt; 10"/>
                           <attribute name="weight" value="ultralight"/>
@@ -890,7 +909,73 @@
                       </object>
                       <packing>
                         <property name="left_attach">0</property>
-                        <property name="top_attach">0</property>
+                        <property name="top_attach">8</property>
+                        <property name="width">1</property>
+                        <property name="height">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkEntry" id="ipv6_prefix">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="invisible_char">●</property>
+                        <property name="invisible_char_set">True</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">7</property>
+                        <property name="width">1</property>
+                        <property name="height">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="label_ipv6_prefix">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="margin_top">8</property>
+                        <property name="xalign">0</property>
+                        <property name="label" translatable="yes">Prefix</property>
+                        <attributes>
+                          <attribute name="font-desc" value="&lt;Enter Value&gt; 10"/>
+                          <attribute name="weight" value="ultralight"/>
+                        </attributes>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">6</property>
+                        <property name="width">1</property>
+                        <property name="height">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkEntry" id="ipv6_address">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="invisible_char">●</property>
+                        <property name="invisible_char_set">True</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">5</property>
+                        <property name="width">1</property>
+                        <property name="height">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="label_ipv6_address">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="margin_top">8</property>
+                        <property name="xalign">0</property>
+                        <property name="label" translatable="yes">Address</property>
+                        <attributes>
+                          <attribute name="font-desc" value="&lt;Enter Value&gt; 10"/>
+                          <attribute name="weight" value="ultralight"/>
+                        </attributes>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">4</property>
                         <property name="width">1</property>
                         <property name="height">1</property>
                       </packing>
@@ -911,27 +996,25 @@
                         </items>
                       </object>
                       <packing>
-                        <property name="left_attach">1</property>
-                        <property name="top_attach">0</property>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">1</property>
                         <property name="width">1</property>
                         <property name="height">1</property>
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkLabel" id="label_ipv6_privacy">
+                      <object class="GtkLabel" id="label_ipv6_method">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="halign">end</property>
-                        <property name="hexpand">True</property>
-                        <property name="xalign">1</property>
-                        <property name="label" translatable="yes">Privacy</property>
+                        <property name="xalign">0</property>
+                        <property name="label" translatable="yes">Method</property>
                         <attributes>
                           <attribute name="font-desc" value="&lt;Enter Value&gt; 10"/>
                           <attribute name="weight" value="ultralight"/>
                         </attributes>
                       </object>
                       <packing>
-                        <property name="left_attach">2</property>
+                        <property name="left_attach">0</property>
                         <property name="top_attach">0</property>
                         <property name="width">1</property>
                         <property name="height">1</property>
@@ -941,8 +1024,7 @@
                       <object class="GtkComboBoxText" id="comboboxtext_ipv6_privacy">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="halign">end</property>
-                        <property name="valign">start</property>
+                        <property name="valign">center</property>
                         <property name="active">0</property>
                         <property name="entry_text_column">0</property>
                         <property name="id_column">1</property>
@@ -953,49 +1035,21 @@
                         </items>
                       </object>
                       <packing>
-                        <property name="left_attach">3</property>
-                        <property name="top_attach">0</property>
-                        <property name="width">1</property>
-                        <property name="height">1</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkLabel" id="label_ipv6_address">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="xalign">1</property>
-                        <property name="label" translatable="yes">Address</property>
-                        <attributes>
-                          <attribute name="font-desc" value="&lt;Enter Value&gt; 10"/>
-                          <attribute name="weight" value="ultralight"/>
-                        </attributes>
-                      </object>
-                      <packing>
                         <property name="left_attach">0</property>
-                        <property name="top_attach">1</property>
+                        <property name="top_attach">3</property>
                         <property name="width">1</property>
                         <property name="height">1</property>
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkEntry" id="ipv6_address">
-                        <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                        <property name="invisible_char">●</property>
-                      </object>
-                      <packing>
-                        <property name="left_attach">1</property>
-                        <property name="top_attach">1</property>
-                        <property name="width">3</property>
-                        <property name="height">1</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkLabel" id="label_ipv6_prefix">
+                      <object class="GtkLabel" id="label_ipv6_privacy">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="xalign">1</property>
-                        <property name="label" translatable="yes">Prefix</property>
+                        <property name="halign">start</property>
+                        <property name="margin_top">8</property>
+                        <property name="hexpand">True</property>
+                        <property name="xalign">0</property>
+                        <property name="label" translatable="yes">Privacy</property>
                         <attributes>
                           <attribute name="font-desc" value="&lt;Enter Value&gt; 10"/>
                           <attribute name="weight" value="ultralight"/>
@@ -1005,50 +1059,6 @@
                         <property name="left_attach">0</property>
                         <property name="top_attach">2</property>
                         <property name="width">1</property>
-                        <property name="height">1</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkEntry" id="ipv6_prefix">
-                        <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                        <property name="invisible_char">●</property>
-                      </object>
-                      <packing>
-                        <property name="left_attach">1</property>
-                        <property name="top_attach">2</property>
-                        <property name="width">3</property>
-                        <property name="height">1</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkLabel" id="label_ipv6_gateway">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="xalign">1</property>
-                        <property name="label" translatable="yes">Gateway</property>
-                        <attributes>
-                          <attribute name="font-desc" value="&lt;Enter Value&gt; 10"/>
-                          <attribute name="weight" value="ultralight"/>
-                        </attributes>
-                      </object>
-                      <packing>
-                        <property name="left_attach">0</property>
-                        <property name="top_attach">3</property>
-                        <property name="width">1</property>
-                        <property name="height">1</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkEntry" id="ipv6_gateway">
-                        <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                        <property name="invisible_char">●</property>
-                      </object>
-                      <packing>
-                        <property name="left_attach">1</property>
-                        <property name="top_attach">3</property>
-                        <property name="width">3</property>
                         <property name="height">1</property>
                       </packing>
                     </child>
@@ -1081,7 +1091,7 @@
                       <object class="GtkLabel" id="label14">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="xalign">1</property>
+                        <property name="xalign">0</property>
                         <property name="label" translatable="yes">Domains</property>
                         <attributes>
                           <attribute name="font-desc" value="&lt;Enter Value&gt; 10"/>
@@ -1101,10 +1111,11 @@
                         <property name="can_focus">True</property>
                         <property name="hexpand">True</property>
                         <property name="invisible_char">●</property>
+                        <property name="invisible_char_set">True</property>
                       </object>
                       <packing>
-                        <property name="left_attach">1</property>
-                        <property name="top_attach">0</property>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">1</property>
                         <property name="width">1</property>
                         <property name="height">1</property>
                       </packing>
@@ -1138,7 +1149,7 @@
                       <object class="GtkLabel" id="label16">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="xalign">1</property>
+                        <property name="xalign">0</property>
                         <property name="label" translatable="yes">Nameservers</property>
                         <attributes>
                           <attribute name="font-desc" value="&lt;Enter Value&gt; 10"/>
@@ -1161,8 +1172,8 @@
                         <property name="invisible_char_set">True</property>
                       </object>
                       <packing>
-                        <property name="left_attach">1</property>
-                        <property name="top_attach">0</property>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">1</property>
                         <property name="width">1</property>
                         <property name="height">1</property>
                       </packing>
@@ -1233,20 +1244,8 @@
   </object>
   <object class="GtkSizeGroup" id="sizegroup3">
     <property name="mode">both</property>
-    <widgets>
-      <widget name="label5"/>
-      <widget name="label_servers"/>
-      <widget name="label_excludes"/>
-      <widget name="label_url"/>
-    </widgets>
   </object>
   <object class="GtkSizeGroup" id="sizegroup4">
     <property name="mode">both</property>
-    <widgets>
-      <widget name="label_ipv6_method"/>
-      <widget name="label_ipv6_address"/>
-      <widget name="label_ipv6_prefix"/>
-      <widget name="label_ipv6_gateway"/>
-    </widgets>
   </object>
 </interface>
