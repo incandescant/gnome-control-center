@@ -1074,16 +1074,7 @@ editor_set_ipv6 (NetConnectionEditor *editor)
 static void
 domains_text_changed (NetConnectionEditor *editor)
 {
-        GtkEntry *entry;
-        guint16 len;
-
-        entry = GTK_ENTRY (WID (editor->builder, "entry_domains"));
-        len = gtk_entry_get_text_length (entry);
-
-        if (len > 0)
-                editor->update_domains = TRUE;
-        else
-                editor->update_domains = FALSE;
+        editor->update_domains = TRUE;
 
         net_connection_editor_update_apply (editor);
 }
