@@ -1315,7 +1315,7 @@ service_property_changed (Service *service,
                 editor_update_proxy (editor);
         if (update_ipv4)
                 editor_update_ipv4 (editor);
-        if (update_ipv4)
+        if (update_ipv6)
                 editor_update_ipv6 (editor);
         if (update_domains)
                 editor_update_domains (editor);
