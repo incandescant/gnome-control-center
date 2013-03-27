@@ -31,7 +31,7 @@
 #include "panel-cell-renderer-text.h"
 #include "panel-cell-renderer-pixbuf.h"
 
-#include "connection-editor/net-connection-editor.h"
+#include "net-connection-editor.h"
 
 #include "manager.h"
 #include "technology.h"
