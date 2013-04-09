@@ -24,6 +24,9 @@ dbus_built_sources =	manager.c manager.h \
 connection_editor_sources = 	net-connection-editor.c \
 				net-connection-editor.h
 
+tether_sources = 	net-tethering.c \
+			net-tethering.h
+
 manager.c: manager.h
 manager.h: Makefile.am manager-interface.xml
 	gdbus-codegen 						\
@@ -54,7 +57,8 @@ libnetwork_la_SOURCES =					\
 	panel-cell-renderer-pixbuf.c			\
 	cc-network-panel.c				\
 	cc-network-panel.h				\
-	$(connection_editor_sources)
+	$(connection_editor_sources)			\
+	$(tether_sources)
 
 
 libnetwork_la_LIBADD = $(NETWORK_PANEL_LIBS)
