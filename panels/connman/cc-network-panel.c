@@ -32,7 +32,6 @@
 #include "panel-cell-renderer-pixbuf.h"
 
 #include "net-connection-editor.h"
-
 #include "manager.h"
 #include "technology.h"
 #include "service.h"
@@ -215,6 +214,16 @@ struct _CcNetworkPanelPrivate
         gint            tech_removed_id;
         gint            mgr_prop_id;
         gint            serv_id;
+
+        GtkDialog       *tethering;
+        gboolean        ethernet_tethered;
+        gboolean        wifi_tethered;
+        gboolean        bluetooth_tethered;
+
+        gboolean        tether_wifi_toggle;
+        gboolean        tether_bt_toggle;
+        gboolean        tether_ethernet_toggle;
+
 };
 
 GHashTable *services;
@@ -441,6 +450,20 @@ ethernet_property_changed (Technology *ethernet,
                 priv->ethernet_powered = powered;
 
                 gtk_switch_set_active (GTK_SWITCH (WID (priv->builder, "switch_ethernet")), powered);
+                gtk_widget_set_sensitive (WID (priv->builder, "switch_tether_ethernet"), powered);
+        }
+
+        if (!g_strcmp0 (property, "Tethering")) {
+                priv->ethernet_tethered  = g_variant_get_boolean (g_variant_get_variant (value));
+                gtk_switch_set_active (GTK_SWITCH (WID (priv->builder, "switch_tether_ethernet")), priv->ethernet_tethered);
+                if (priv->ethernet_tethered)
+                        gtk_image_set_from_icon_name (GTK_IMAGE (WID (priv->builder, "image_ethernet")),
+                                                      "connman_hotspot",
+                                                      GTK_ICON_SIZE_BUTTON);
+                else
+                        gtk_image_set_from_icon_name (GTK_IMAGE (WID (priv->builder, "image_ethernet")),
+                                                      "network-wired-symbolic",
+                                                      GTK_ICON_SIZE_BUTTON);
         }
 }
 
@@ -509,6 +532,7 @@ cc_add_technology_ethernet (const gchar         *path,
 
         GError *error = NULL;
         gboolean powered;
+        gboolean tethering;
 
         if (priv->ethernet == NULL) {
                 priv->ethernet = technology_proxy_new_for_bus_sync (G_BUS_TYPE_SYSTEM,
@@ -525,6 +549,7 @@ cc_add_technology_ethernet (const gchar         *path,
                 }
 
                 gtk_widget_set_sensitive (WID (priv->builder, "box_ethernet"), TRUE);
+                gtk_widget_set_sensitive (WID (priv->builder, "switch_tether_ethernet"), TRUE);
 
                 priv->ethernet_id = g_signal_connect (priv->ethernet,
                                                       "property_changed",
@@ -537,6 +562,19 @@ cc_add_technology_ethernet (const gchar         *path,
         if (g_variant_lookup (properties, "Powered", "b", &powered)) {
                 priv->ethernet_powered = powered;
                 gtk_switch_set_active (GTK_SWITCH (WID (priv->builder, "switch_ethernet")), powered);
+        }
+
+        if (g_variant_lookup (properties, "Tethering", "b", &tethering)) {
+                priv->ethernet_tethered  = tethering;
+                gtk_switch_set_active (GTK_SWITCH (WID (priv->builder, "switch_tether_ethernet")), priv->ethernet_tethered);
+                if (priv->ethernet_tethered)
+                        gtk_image_set_from_icon_name (GTK_IMAGE (WID (priv->builder, "image_ethernet")),
+                                                      "connman_hotspot",
+                                                      GTK_ICON_SIZE_BUTTON);
+                else
+                        gtk_image_set_from_icon_name (GTK_IMAGE (WID (priv->builder, "image_ethernet")),
+                                                      "network-wired-symbolic",
+                                                      GTK_ICON_SIZE_BUTTON);
         }
 }
 
@@ -557,6 +595,11 @@ cc_remove_technology_ethernet (CcNetworkPanel *panel)
 
         gtk_switch_set_active (GTK_SWITCH (WID (priv->builder, "switch_ethernet")), FALSE);
         gtk_widget_set_sensitive (WID (priv->builder, "box_ethernet"), FALSE);
+        gtk_widget_set_sensitive (WID (priv->builder, "switch_tether_ethernet"), FALSE);
+
+        gtk_image_set_from_icon_name (GTK_IMAGE (WID (priv->builder, "image_ethernet")),
+                                      "network-wired-symbolic",
+                                      GTK_ICON_SIZE_BUTTON);
 }
 
 /* Ethernet section ends*/
@@ -577,6 +620,22 @@ wifi_property_changed (Technology *wifi,
                 priv->wifi_powered = powered;
 
                 gtk_switch_set_active (GTK_SWITCH (WID (priv->builder, "switch_wifi")), powered);
+                gtk_widget_set_sensitive (WID (priv->builder, "switch_tether_wifi"), powered);
+        } else if (!g_strcmp0 (property, "Tethering")) {
+                priv->wifi_tethered  = g_variant_get_boolean (g_variant_get_variant (value));
+                gtk_switch_set_active (GTK_SWITCH (WID (priv->builder, "switch_tether_wifi")), priv->wifi_tethered);
+                if (priv->wifi_tethered)
+                        gtk_image_set_from_icon_name (GTK_IMAGE (WID (priv->builder, "image_wifi")),
+                                                      "connman_hotspot",
+                                                      GTK_ICON_SIZE_BUTTON);
+                else
+                        gtk_image_set_from_icon_name (GTK_IMAGE (WID (priv->builder, "image_wifi")),
+                                                      "network-wireless-signal-excellent-symbolic",
+                                                      GTK_ICON_SIZE_BUTTON);
+        } else if (!g_strcmp0 (property, "TetheringIdentifier")) {
+                gtk_entry_set_text (GTK_ENTRY (WID (priv->builder, "entry_ssid")), g_variant_get_string (g_variant_get_variant (value), NULL));
+        } else if (!g_strcmp0 (property, "TetheringPassphrase")) {
+                gtk_entry_set_text (GTK_ENTRY (WID (priv->builder, "entry_passphrase")), g_variant_get_string (g_variant_get_variant (value), NULL));
         }
 }
 
@@ -645,6 +704,8 @@ cc_add_technology_wifi (const gchar         *path,
 
         GError *error = NULL;
         gboolean powered;
+        gboolean tethering;
+        gchar *str;
 
         if (priv->wifi == NULL) {
                 priv->wifi = technology_proxy_new_for_bus_sync (G_BUS_TYPE_SYSTEM,
@@ -661,6 +722,7 @@ cc_add_technology_wifi (const gchar         *path,
                 }
 
                 gtk_widget_set_sensitive (WID (priv->builder, "box_wifi"), TRUE);
+                gtk_widget_set_sensitive (WID (priv->builder, "switch_tether_wifi"), TRUE);
 
                 priv->wifi_id = g_signal_connect (priv->wifi,
                                                       "property_changed",
@@ -673,6 +735,28 @@ cc_add_technology_wifi (const gchar         *path,
         if (g_variant_lookup (properties, "Powered", "b", &powered)) {
                 priv->wifi_powered = powered;
                 gtk_switch_set_active (GTK_SWITCH (WID (priv->builder, "switch_wifi")), powered);
+        }
+
+        if (g_variant_lookup (properties, "Tethering", "b", &tethering)) {
+                priv->wifi_tethered  = tethering;
+                gtk_switch_set_active (GTK_SWITCH (WID (priv->builder, "switch_tether_wifi")), priv->wifi_tethered);
+
+                if (priv->wifi_tethered)
+                        gtk_image_set_from_icon_name (GTK_IMAGE (WID (priv->builder, "image_wifi")),
+                                                      "connman_hotspot",
+                                                      GTK_ICON_SIZE_BUTTON);
+                else
+                        gtk_image_set_from_icon_name (GTK_IMAGE (WID (priv->builder, "image_wifi")),
+                                                      "network-wireless-signal-excellent-symbolic",
+                                                      GTK_ICON_SIZE_BUTTON);
+        }
+
+        if (g_variant_lookup (properties, "TetheringIdentifier", "s", &str)) {
+                gtk_entry_set_text (GTK_ENTRY (WID (priv->builder, "entry_ssid")), str);
+        }
+
+        if (g_variant_lookup (properties, "TetheringPassphrase", "s", &str)) {
+                gtk_entry_set_text (GTK_ENTRY (WID (priv->builder, "entry_passphrase")), str);
         }
 }
 
@@ -693,6 +777,11 @@ cc_remove_technology_wifi (CcNetworkPanel *panel)
 
         gtk_switch_set_active (GTK_SWITCH (WID (priv->builder, "switch_wifi")), FALSE);
         gtk_widget_set_sensitive (WID (priv->builder, "box_wifi"), FALSE);
+        gtk_widget_set_sensitive (WID (priv->builder, "switch_tether_wifi"), FALSE);
+
+        gtk_image_set_from_icon_name (GTK_IMAGE (WID (priv->builder, "image_wifi")),
+                                      "network-wireless-signal-excellent-symbolic",
+                                      GTK_ICON_SIZE_BUTTON);
 }
 
 /* Wifi section ends*/
@@ -713,6 +802,21 @@ bluetooth_property_changed (Technology *bluetooth,
                 priv->bluetooth_powered = powered;
 
                 gtk_switch_set_active (GTK_SWITCH (WID (priv->builder, "switch_bluetooth")), powered);
+
+                gtk_widget_set_sensitive (WID (priv->builder, "switch_tether_bt"), powered);
+        }
+        if (!g_strcmp0 (property, "Tethering")) {
+                priv->bluetooth_tethered  = g_variant_get_boolean (g_variant_get_variant (value));
+                gtk_switch_set_active (GTK_SWITCH (WID (priv->builder, "switch_tether_bt")), priv->bluetooth_tethered);
+
+                if (priv->bluetooth_tethered)
+                        gtk_image_set_from_icon_name (GTK_IMAGE (WID (priv->builder, "image_bluetooth")),
+                                                      "connman_hotspot",
+                                                      GTK_ICON_SIZE_BUTTON);
+                else
+                        gtk_image_set_from_icon_name (GTK_IMAGE (WID (priv->builder, "image_bluetooth")),
+                                                      "bluetooth-active-symbolic",
+                                                      GTK_ICON_SIZE_BUTTON);
         }
 }
 
@@ -781,6 +885,7 @@ cc_add_technology_bluetooth (const gchar         *path,
 
         GError *error = NULL;
         gboolean powered;
+        gboolean tethering;
 
         if (priv->bluetooth == NULL) {
                 priv->bluetooth = technology_proxy_new_for_bus_sync (G_BUS_TYPE_SYSTEM,
@@ -797,6 +902,7 @@ cc_add_technology_bluetooth (const gchar         *path,
                 }
 
                 gtk_widget_set_sensitive (WID (priv->builder, "box_bluetooth"), TRUE);
+                gtk_widget_set_sensitive (WID (priv->builder, "switch_tether_bt"), TRUE);
 
                 priv->bluetooth_id = g_signal_connect (priv->bluetooth,
                                                       "property_changed",
@@ -809,6 +915,19 @@ cc_add_technology_bluetooth (const gchar         *path,
         if (g_variant_lookup (properties, "Powered", "b", &powered)) {
                 priv->bluetooth_powered = powered;
                 gtk_switch_set_active (GTK_SWITCH (WID (priv->builder, "switch_bluetooth")), powered);
+        }
+
+        if (g_variant_lookup (properties, "Tethering", "b", &tethering)) {
+                priv->bluetooth_tethered  = tethering;
+                gtk_switch_set_active (GTK_SWITCH (WID (priv->builder, "switch_tether_bt")), priv->bluetooth_tethered);
+                if (tethering)
+                        gtk_image_set_from_icon_name (GTK_IMAGE (WID (priv->builder, "image_bluetooth")),
+                                                      "connman_hotspot",
+                                                      GTK_ICON_SIZE_BUTTON);
+                else
+                        gtk_image_set_from_icon_name (GTK_IMAGE (WID (priv->builder, "image_bluetooth")),
+                                                      "bluetooth-active-symbolic",
+                                                      GTK_ICON_SIZE_BUTTON);
         }
 }
 
@@ -829,6 +948,12 @@ cc_remove_technology_bluetooth (CcNetworkPanel *panel)
 
         gtk_switch_set_active (GTK_SWITCH (WID (priv->builder, "switch_bluetooth")), FALSE);
         gtk_widget_set_sensitive (WID (priv->builder, "box_bluetooth"), FALSE);
+        gtk_widget_set_sensitive (WID (priv->builder, "switch_tether_bt"), FALSE);
+
+        gtk_image_set_from_icon_name (GTK_IMAGE (WID (priv->builder, "image_bluetooth")),
+                                                      "bluetooth-active-symbolic",
+                                                      GTK_ICON_SIZE_BUTTON);
+
 }
 
 /* Bluetooth section ends*/
@@ -1791,6 +1916,360 @@ activate_settings_cb (PanelCellRendererPixbuf *cell,
 
 /* Service section ends */
 
+/* Tethering section */
+
+static void
+tether_apply_update (CcNetworkPanelPrivate *priv)
+{
+        gboolean wifi;
+        GtkEntry *entry;
+        guint16 len_ssid, len_pass;
+
+        wifi = gtk_switch_get_active (GTK_SWITCH (WID (priv->builder, "switch_tether_wifi")));
+
+        if (priv->tether_wifi_toggle) {
+                entry = GTK_ENTRY (WID (priv->builder, "entry_ssid"));
+                len_ssid = gtk_entry_get_text_length (entry);
+
+                entry = GTK_ENTRY (WID (priv->builder, "entry_passphrase"));
+                len_pass = gtk_entry_get_text_length (entry);
+
+                if (wifi) {
+                        if (len_ssid > 0 && len_pass >=8)
+                                gtk_widget_set_sensitive (GTK_WIDGET (WID (priv->builder, "button_apply")), TRUE);
+                        else
+                                gtk_widget_set_sensitive (GTK_WIDGET (WID (priv->builder, "button_apply")), FALSE);
+                        return;
+                }
+        }
+
+        gtk_widget_set_sensitive (GTK_WIDGET (WID (priv->builder, "button_apply")), TRUE);
+}
+
+static void
+cc_set_tethering_image (CcNetworkPanelPrivate *priv)
+{
+        gboolean wifi, bluetooth, ethernet;
+
+        wifi = gtk_switch_get_active (GTK_SWITCH (WID (priv->builder, "switch_tether_wifi")));
+        bluetooth = gtk_switch_get_active (GTK_SWITCH (WID (priv->builder, "switch_tether_bt")));
+        ethernet = gtk_switch_get_active (GTK_SWITCH (WID (priv->builder, "switch_tether_ethernet")));
+
+        if (wifi && bluetooth && ethernet)
+                gtk_image_set_from_file (GTK_IMAGE (WID (priv->builder, "image_tethering")), TETHERDIR "/tethering_all.png");
+        else if (wifi && bluetooth)
+                gtk_image_set_from_file (GTK_IMAGE (WID (priv->builder, "image_tethering")), TETHERDIR "/tethering_bt_wifi.png");
+        else if (bluetooth && ethernet)
+                gtk_image_set_from_file (GTK_IMAGE (WID (priv->builder, "image_tethering")), TETHERDIR "/tethering_bt_ethernet.png");
+        else if (wifi && ethernet)
+                gtk_image_set_from_file (GTK_IMAGE (WID (priv->builder, "image_tethering")), TETHERDIR "/tethering_wifi_ethernet.png");
+        else if (wifi)
+                gtk_image_set_from_file (GTK_IMAGE (WID (priv->builder, "image_tethering")), TETHERDIR "/tethering_wifi.png");
+        else if (ethernet)
+                gtk_image_set_from_file (GTK_IMAGE (WID (priv->builder, "image_tethering")), TETHERDIR "/tethering_ethernet.png");
+        else if (bluetooth)
+                gtk_image_set_from_file (GTK_IMAGE (WID (priv->builder, "image_tethering")), TETHERDIR "/tethering_bt.png");
+        else
+                gtk_image_set_from_file (GTK_IMAGE (WID (priv->builder, "image_tethering")), TETHERDIR "/tethering_inactive.png");
+}
+
+static void
+cc_wifi_tether_switch_toggle (GtkSwitch *sw,
+                              GParamSpec *pspec,
+                              CcNetworkPanelPrivate *priv)
+{
+        gboolean enable;
+
+        enable = gtk_switch_get_active (sw);
+
+        cc_set_tethering_image (priv);
+
+        if (enable == priv->wifi_tethered)
+                return;
+
+        if (enable) {
+                gtk_widget_set_sensitive (GTK_WIDGET (WID (priv->builder, "entry_ssid")), TRUE);
+                gtk_widget_set_sensitive (GTK_WIDGET (WID (priv->builder, "entry_passphrase")), TRUE);
+        } else {
+                gtk_widget_set_sensitive (GTK_WIDGET (WID (priv->builder, "entry_ssid")), FALSE);
+                gtk_widget_set_sensitive (GTK_WIDGET (WID (priv->builder, "entry_passphrase")), FALSE);
+        }
+
+        priv->tether_wifi_toggle = TRUE;
+        tether_apply_update (priv);
+}
+
+static void
+cc_bt_tether_switch_toggle (GtkSwitch *sw,
+                            GParamSpec *pspec,
+                            CcNetworkPanelPrivate *priv)
+{
+        gboolean enable;
+
+        enable = gtk_switch_get_active (sw);
+
+        cc_set_tethering_image (priv);
+
+        if (enable == priv->bluetooth_tethered)
+                return;
+
+        priv->tether_bt_toggle = TRUE;
+        tether_apply_update (priv);
+}
+
+static void
+cc_ethernet_tether_switch_toggle (GtkSwitch *sw,
+                                  GParamSpec *pspec,
+                                  CcNetworkPanelPrivate *priv)
+{
+        gboolean enable;
+
+        enable = gtk_switch_get_active (sw);
+
+        cc_set_tethering_image (priv);
+
+        if (enable == priv->ethernet_tethered)
+                return;
+
+        priv->tether_ethernet_toggle = TRUE;
+        tether_apply_update (priv);
+}
+
+static void
+cancel_tethering (CcNetworkPanelPrivate *priv)
+{
+        gtk_widget_hide (GTK_WIDGET (priv->tethering));
+}
+
+static void
+bluetooth_set_tethered (GObject      *source,
+                        GAsyncResult *res,
+                        gpointer      user_data)
+{
+        CcNetworkPanelPrivate *priv = user_data;
+        GError *error = NULL;
+
+        if (!priv->bluetooth)
+                return;
+
+        if (!technology_call_set_property_finish (priv->bluetooth, res, &error)) {
+                g_warning ("Could not set bluetooth Tethering property: %s", error->message);
+                g_error_free (error);
+                return;
+        }
+}
+
+static void
+ethernet_set_tethered (GObject      *source,
+                       GAsyncResult *res,
+                       gpointer      user_data)
+{
+        CcNetworkPanelPrivate *priv = user_data;
+        GError *error = NULL;
+
+        if (!priv->ethernet)
+                return;
+
+        if (!technology_call_set_property_finish (priv->ethernet, res, &error)) {
+                g_warning ("Could not set ethernet Tethering property: %s", error->message);
+                g_error_free (error);
+                return;
+        }
+}
+
+static void
+wifi_set_tethered (GObject      *source,
+                   GAsyncResult *res,
+                   gpointer      user_data)
+{
+        CcNetworkPanelPrivate *priv = user_data;
+        GError *error = NULL;
+
+        if (!priv->wifi)
+                return;
+
+        if (!technology_call_set_property_finish (priv->wifi, res, &error)) {
+                g_warning ("Could not set wifi Tethering property: %s", error->message);
+                g_error_free (error);
+                return;
+        }
+}
+
+static void
+wifi_set_passphrase (GObject      *source,
+                     GAsyncResult *res,
+                     gpointer      user_data)
+{
+        CcNetworkPanelPrivate *priv = user_data;
+        GError *error = NULL;
+
+        if (!priv->wifi)
+                return;
+
+        if (!technology_call_set_property_finish (priv->wifi, res, &error)) {
+                g_warning ("Could not set wifi Tethering passphrase: %s", error->message);
+                g_error_free (error);
+                return;
+        }
+
+        if (priv->wifi_tethered == gtk_switch_get_active (GTK_SWITCH (WID (priv->builder, "switch_tether_wifi"))))
+                return;
+
+        technology_call_set_property (priv->wifi,
+                                      "Tethering",
+                                      g_variant_new_variant (g_variant_new_boolean (TRUE)),
+                                      NULL,
+                                      wifi_set_tethered,
+                                      priv);
+}
+
+static void
+wifi_set_ssid (GObject      *source,
+               GAsyncResult *res,
+               gpointer      user_data)
+{
+        CcNetworkPanelPrivate *priv = user_data;
+        GError *error = NULL;
+        const gchar *passphrase;
+
+        if (!priv->wifi)
+                return;
+
+        if (!technology_call_set_property_finish (priv->wifi, res, &error)) {
+                g_warning ("Could not set wifi Tethering ssid: %s", error->message);
+                g_error_free (error);
+                return;
+        }
+
+        passphrase = (gchar *) gtk_entry_get_text (GTK_ENTRY (WID (priv->builder, "entry_passphrase")));
+        technology_call_set_property (priv->wifi,
+                                      "TetheringPassphrase",
+                                      g_variant_new_variant (g_variant_new_string (passphrase)),
+                                      NULL,
+                                      wifi_set_passphrase,
+                                      priv);
+}
+
+
+static void
+apply_tethering (CcNetworkPanelPrivate *priv)
+{
+        gboolean wifi, bluetooth, ethernet;
+        const gchar *ssid;
+
+        gtk_widget_hide (GTK_WIDGET (priv->tethering));
+
+        wifi = gtk_switch_get_active (GTK_SWITCH (WID (priv->builder, "switch_tether_wifi")));
+        bluetooth = gtk_switch_get_active (GTK_SWITCH (WID (priv->builder, "switch_tether_bt")));
+        ethernet = gtk_switch_get_active (GTK_SWITCH (WID (priv->builder, "switch_tether_ethernet")));
+
+        ssid = (gchar *) gtk_entry_get_text (GTK_ENTRY (WID (priv->builder, "entry_ssid")));
+
+        technology_call_set_property (priv->bluetooth,
+                                      "Tethering",
+                                      g_variant_new_variant (g_variant_new_boolean (bluetooth)),
+                                      NULL,
+                                      bluetooth_set_tethered,
+                                      priv);
+
+        technology_call_set_property (priv->ethernet,
+                                      "Tethering",
+                                      g_variant_new_variant (g_variant_new_boolean (ethernet)),
+                                      NULL,
+                                      ethernet_set_tethered,
+                                      priv);
+
+        if (wifi) {
+                technology_call_set_property (priv->wifi,
+                                              "TetheringIdentifier",
+                                              g_variant_new_variant (g_variant_new_string (ssid)),
+                                              NULL,
+                                              wifi_set_ssid,
+                                              priv);
+                return;
+        }
+
+        technology_call_set_property (priv->wifi,
+                                      "Tethering",
+                                      g_variant_new_variant (g_variant_new_boolean (wifi)),
+                                      NULL,
+                                      wifi_set_tethered,
+                                      priv);
+}
+
+static void
+entry_fields_text_changed (CcNetworkPanelPrivate *priv)
+{
+        tether_apply_update (priv);
+}
+
+static void
+cc_setup_hotspot (GtkButton *button, gpointer user_data)
+{
+        CcNetworkPanel *panel = user_data;
+        CcNetworkPanelPrivate *priv = panel->priv;
+        GtkWindow *window;
+        GtkButton *btn;
+
+        if (!priv->tethering) {
+                window = cc_shell_get_toplevel (cc_panel_get_shell (CC_PANEL (panel)));
+
+                priv->tethering = GTK_DIALOG (WID (priv->builder, "dialog_tethering"));
+                gtk_window_set_transient_for (GTK_WINDOW (priv->tethering), window);
+
+                btn = GTK_WIDGET (WID (priv->builder, "button_cancel"));
+                g_signal_connect_swapped (btn, "clicked",
+                                          G_CALLBACK (cancel_tethering), priv);
+
+                btn = GTK_WIDGET (WID (priv->builder, "button_apply"));
+                g_signal_connect_swapped (btn, "clicked",
+                                          G_CALLBACK (apply_tethering), priv);
+
+                g_signal_connect (GTK_SWITCH (WID (priv->builder, "switch_tether_wifi")),
+                                  "notify::active",
+                                  G_CALLBACK (cc_wifi_tether_switch_toggle),
+                                  priv);
+
+                g_signal_connect (GTK_SWITCH (WID (priv->builder, "switch_tether_bt")),
+                                  "notify::active",
+                                  G_CALLBACK (cc_bt_tether_switch_toggle),
+                                  priv);
+
+                g_signal_connect (GTK_SWITCH (WID (priv->builder, "switch_tether_ethernet")),
+                                  "notify::active",
+                                  G_CALLBACK (cc_ethernet_tether_switch_toggle),
+                                  priv);
+
+                g_signal_connect_swapped (GTK_ENTRY (WID (priv->builder, "entry_ssid")),
+                                          "notify::text-length",
+                                          G_CALLBACK (entry_fields_text_changed),
+                                          priv);
+
+                g_signal_connect_swapped (GTK_ENTRY (WID (priv->builder, "entry_passphrase")),
+                                          "notify::text-length",
+                                          G_CALLBACK (entry_fields_text_changed),
+                                          priv);
+        }
+
+        gtk_widget_set_sensitive (GTK_WIDGET (WID (priv->builder, "button_apply")), FALSE);
+        gtk_widget_set_sensitive (GTK_WIDGET (WID (priv->builder, "entry_ssid")), FALSE);
+        gtk_widget_set_sensitive (GTK_WIDGET (WID (priv->builder, "entry_passphrase")), FALSE);
+
+        priv->tether_wifi_toggle = FALSE;
+        priv->tether_bt_toggle = FALSE;
+        priv->tether_ethernet_toggle = FALSE;
+
+        gtk_switch_set_active (GTK_SWITCH (WID (priv->builder, "switch_tether_wifi")), priv->wifi_tethered);
+        gtk_switch_set_active (GTK_SWITCH (WID (priv->builder, "switch_tether_bt")), priv->bluetooth_tethered);
+        gtk_switch_set_active (GTK_SWITCH (WID (priv->builder, "switch_tether_ethernet")), priv->ethernet_tethered);
+
+        cc_set_tethering_image (priv);
+
+        gtk_window_present (GTK_WINDOW (priv->tethering));
+}
+
+/* Tethering section ends */
+
 static void
 on_manager_property_changed (Manager *manager,
                              const gchar *property,
@@ -1967,8 +2446,8 @@ set_service_name (GtkTreeViewColumn *col,
                   gpointer           user_data)
 {
         gboolean fav;
-        const gchar *name, *uniname;
-        const gchar *state;
+        const gchar *name, *state;
+        gchar *uniname;
 
         gtk_tree_model_get (model, iter, COLUMN_FAVORITE, &fav, -1);
         gtk_tree_model_get (model, iter, COLUMN_NAME, &name, -1);
@@ -2150,6 +2629,11 @@ cc_network_panel_init (CcNetworkPanel *panel)
         g_signal_connect (GTK_SWITCH (WID (priv->builder, "switch_cellular")),
                           "notify::active",
                           G_CALLBACK (cc_cellular_switch_toggle),
+                          panel);
+
+        g_signal_connect (GTK_BUTTON (WID (priv->builder, "button_hotspot")),
+                          "clicked",
+                          G_CALLBACK (cc_setup_hotspot),
                           panel);
 
         services = g_hash_table_new_full (g_str_hash,

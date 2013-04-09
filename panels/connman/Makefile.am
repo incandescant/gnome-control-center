@@ -5,9 +5,13 @@ cappletname = network
 libnetwork_la_CPPFLAGS =				\
 	$(NETWORK_PANEL_CFLAGS)				\
 	-DGNOMELOCALEDIR="\"$(datadir)/locale\""	\
+	-DTETHERDIR="\"$(pkgdatadir)/connman\""	\
 	$(NULL)
 
 noinst_LTLIBRARIES = libnetwork.la
+
+tetherdatadir = $(pkgdatadir)/connman
+dist_tetherdata_DATA = data/*.png
 
 BUILT_SOURCES =			\
 	cc-network-resources.c	\
@@ -51,6 +55,7 @@ libnetwork_la_SOURCES =					\
 	cc-network-panel.c				\
 	cc-network-panel.h				\
 	$(connection_editor_sources)
+
 
 libnetwork_la_LIBADD = $(NETWORK_PANEL_LIBS)
 
