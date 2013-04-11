@@ -47,6 +47,11 @@ activate (GtkCellRenderer      *cell,
           const GdkRectangle   *cell_area,
           GtkCellRendererState  flags)
 {
+	GdkDevice *device = gdk_event_get_device (event);
+
+	if (device)
+		gdk_device_ungrab (device, GDK_CURRENT_TIME);
+
         g_signal_emit (cell,  signals[ACTIVATE], 0, path);
 
         return TRUE;
