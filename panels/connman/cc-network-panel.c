@@ -1831,8 +1831,6 @@ activate_service_cb (PanelCellRendererText *cell,
 
         gtk_tree_path_free (tree_path);
 
-        gdk_pointer_ungrab (GDK_CURRENT_TIME);
-
         if (!g_strcmp0 (state, "online") || !g_strcmp0 (state, "ready"))
                 service_call_disconnect (service, priv->cancellable, service_disconnect_cb, service);
         else if (!g_strcmp0 (state, "idle") || !g_strcmp0 (state, "failure"))
