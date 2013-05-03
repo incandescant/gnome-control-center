@@ -186,7 +186,7 @@ struct _CcNetworkPanelPrivate
 
         GtkBuilder      *builder;
         GCancellable    *cancellable;
-        Manager         *manager;
+        ConnManManager         *manager;
         gint            global_state;
 
         gboolean        offlinemode;
@@ -300,7 +300,7 @@ manager_set_offlinemode (GObject      *source,
         GError *error = NULL;
         gint err_code;
 
-        if (!manager_call_set_property_finish (priv->manager, res, &error)) {
+        if (!conn_man_manager_call_set_property_finish (priv->manager, res, &error)) {
                 g_warning ("Manager: Could not set OfflineMode: %s", error->message);
                 err_code = error->code;
                 g_error_free (error);
@@ -331,7 +331,7 @@ offline_switch_toggle (GtkSwitch *sw,
 
         value = g_variant_new_boolean (offline);
 
-        manager_call_set_property (priv->manager,
+        conn_man_manager_call_set_property (priv->manager,
                                    "OfflineMode",
                                    g_variant_new_variant (value),
                                    priv->cancellable,
@@ -1153,7 +1153,7 @@ manager_get_technologies (GObject        *source,
         gchar *path;
 
         error = NULL;
-        if (!manager_call_get_technologies_finish (priv->manager, &result,
+        if (!conn_man_manager_call_get_technologies_finish (priv->manager, &result,
                                            res, &error))
                 {
                         /* TODO: display any error in a user friendly way */
@@ -1186,12 +1186,12 @@ manager_get_technologies (GObject        *source,
 
         if (priv->tech_update) {
                 priv->tech_update = FALSE;
-                manager_call_get_technologies (priv->manager, priv->cancellable, manager_get_technologies, panel);
+                conn_man_manager_call_get_technologies (priv->manager, priv->cancellable, manager_get_technologies, panel);
         }
 }
 
 static void
-manager_technology_added (Manager *manager,
+manager_technology_added (ConnManManager *manager,
                           const gchar *path,
                           GVariant *properties,
                           CcNetworkPanel *panel)
@@ -1202,12 +1202,12 @@ manager_technology_added (Manager *manager,
 
         if (priv->tech_update) {
                 priv->tech_update = FALSE;
-                manager_call_get_technologies(priv->manager, priv->cancellable, manager_get_technologies, panel);
+                conn_man_manager_call_get_technologies(priv->manager, priv->cancellable, manager_get_technologies, panel);
         }
 }
 
 static void
-manager_technology_removed (Manager *manager,
+manager_technology_removed (ConnManManager *manager,
                           const gchar *path,
                           CcNetworkPanel *panel)
 {
@@ -1599,7 +1599,7 @@ cc_add_service (const gchar         *path,
 }
 
 static void
-manager_services_changed (Manager *manager,
+manager_services_changed (ConnManManager *manager,
                           GVariant *added,
                           const gchar *const *removed,
                           CcNetworkPanel *panel)
@@ -1728,7 +1728,7 @@ manager_get_services (GObject        *source,
         gint size;
 
         error = NULL;
-        if (!manager_call_get_services_finish (priv->manager, &result,
+        if (!conn_man_manager_call_get_services_finish (priv->manager, &result,
                                                res, &error))
                 {
                         /* TODO: display any error in a user friendly way */
@@ -1770,7 +1770,7 @@ manager_get_services (GObject        *source,
 
         /* if (priv->serv_update) { */
         /*         priv->serv_update = FALSE; */
-        /*         manager_call_get_services (priv->manager, priv->cancellable, manager_get_services, panel); */
+        /*         conn_man_manager_call_get_services (priv->manager, priv->cancellable, manager_get_services, panel); */
 
 }
 
@@ -2269,7 +2269,7 @@ cc_setup_hotspot (GtkButton *button, gpointer user_data)
 /* Tethering section ends */
 
 static void
-on_manager_property_changed (Manager *manager,
+on_manager_property_changed (ConnManManager *manager,
                              const gchar *property,
                              GVariant *value,
                              CcNetworkPanel *panel)
@@ -2311,7 +2311,7 @@ manager_get_properties (GObject      *source,
         const gchar *state;
 
         error = NULL;
-        if (!manager_call_get_properties_finish (priv->manager, &result,
+        if (!conn_man_manager_call_get_properties_finish (priv->manager, &result,
                                                  res, &error))
                 {
                         /* TODO: display any error in a user friendly way */
@@ -2346,7 +2346,7 @@ manager_created_cb (GObject *source_object,
 
         g_clear_object (&priv->manager);
 
-        priv->manager = manager_proxy_new_for_bus_finish (res, &error);
+        priv->manager = conn_man_manager_proxy_new_for_bus_finish (res, &error);
         if (error != NULL) {
                 g_warning ("Couldn't contact connmand service: %s", error->message);
                 g_error_free (error);
@@ -2359,7 +2359,7 @@ manager_created_cb (GObject *source_object,
         priv->mgr_prop_id = g_signal_connect (priv->manager, "property_changed",
                           G_CALLBACK (on_manager_property_changed), panel);
 
-        manager_call_get_properties (priv->manager, priv->cancellable, manager_get_properties, panel);
+        conn_man_manager_call_get_properties (priv->manager, priv->cancellable, manager_get_properties, panel);
 
         priv->tech_added_id = g_signal_connect (priv->manager, "technology_added",
                                                 G_CALLBACK (manager_technology_added), panel);
@@ -2367,12 +2367,12 @@ manager_created_cb (GObject *source_object,
         priv->tech_removed_id = g_signal_connect (priv->manager, "technology_removed",
                                                   G_CALLBACK (manager_technology_removed), panel);
 
-        manager_call_get_technologies (priv->manager, priv->cancellable, manager_get_technologies, panel);
+        conn_man_manager_call_get_technologies (priv->manager, priv->cancellable, manager_get_technologies, panel);
 
         priv->serv_id = g_signal_connect (priv->manager, "services_changed",
                                           G_CALLBACK (manager_services_changed), panel);
 
-        manager_call_get_services (priv->manager, priv->cancellable, manager_get_services, panel);
+        conn_man_manager_call_get_services (priv->manager, priv->cancellable, manager_get_services, panel);
 }
 
 static void
@@ -2393,7 +2393,7 @@ connman_appeared_cb (GDBusConnection *connection,
         widget = GTK_WIDGET (WID (priv->builder, "vbox1"));
         gtk_widget_set_sensitive (widget, TRUE);
 
-        manager_proxy_new_for_bus (G_BUS_TYPE_SYSTEM,
+        conn_man_manager_proxy_new_for_bus (G_BUS_TYPE_SYSTEM,
                                    G_DBUS_PROXY_FLAGS_NONE,
                                    "net.connman",
                                    "/",

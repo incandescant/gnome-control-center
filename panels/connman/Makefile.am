@@ -33,6 +33,7 @@ manager.h: Makefile.am manager-interface.xml
 	gdbus-codegen 						\
 		--interface-prefix net.connman.			\
 		--generate-c-code manager 			\
+		--c-namespace ConnMan	 			\
 		$(srcdir)/manager-interface.xml
 
 technology.c: technology.h
