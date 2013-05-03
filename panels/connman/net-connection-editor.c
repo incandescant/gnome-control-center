@@ -391,6 +391,26 @@ proxy_servers_text_changed (NetConnectionEditor *editor)
         net_connection_editor_update_apply (editor);
 }
 
+static void
+proxy_excludes_text_changed (NetConnectionEditor *editor)
+{
+        GtkEntry *entry;
+        guint16 len;
+
+        if (g_strcmp0 (editor->proxy_method, "manual") != 0)
+                return;
+
+        entry = GTK_ENTRY (WID (editor->builder, "proxy_excludes"));
+
+        len = gtk_entry_get_text_length (entry);
+        if (len == 0)
+                return;
+
+        editor->update_proxy = TRUE;
+
+        net_connection_editor_update_apply (editor);
+}
+
 void
 editor_update_proxy (NetConnectionEditor *editor)
 {
@@ -1418,6 +1438,11 @@ net_connection_editor_init (NetConnectionEditor *editor)
         g_signal_connect_swapped (GTK_ENTRY (WID (editor->builder, "proxy_servers")),
                                   "notify::text-length",
                                   G_CALLBACK (proxy_servers_text_changed),
+                                  editor);
+
+        g_signal_connect_swapped (GTK_ENTRY (WID (editor->builder, "proxy_excludes")),
+                                  "notify::text-length",
+                                  G_CALLBACK (proxy_excludes_text_changed),
                                   editor);
 
         g_signal_connect (GTK_COMBO_BOX (WID (editor->builder, "comboboxtext_ipv4_method")),
