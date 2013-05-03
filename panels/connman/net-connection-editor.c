@@ -85,8 +85,7 @@ editor_update_details (NetConnectionEditor *editor)
         GtkTreePath *tree_path;
         GtkTreeIter iter;
 
-        gchar link_speed;
-
+        const gchar *interface;
         const gchar *signal_strength;
         const gchar *security, *ipv4_address, *mac, *def_route;
         gboolean autoconnect, favorite, ret;
@@ -123,11 +122,11 @@ editor_update_details (NetConnectionEditor *editor)
 
         gtk_label_set_text (GTK_LABEL (WID (editor->builder, "label_security")), g_ascii_strup (security, -1));
 
-        ret = g_variant_lookup (ethernet, "Speed", "y", &link_speed);
+        ret = g_variant_lookup (ethernet, "Interface", "s", &interface);
         if (ret)
-                gtk_label_set_text (GTK_LABEL (WID (editor->builder, "label_link_speed")), g_strdup_printf ("%c MB/sec", link_speed));
+                gtk_label_set_text (GTK_LABEL (WID (editor->builder, "label_interface")), interface);
         else
-                gtk_label_set_text (GTK_LABEL (WID (editor->builder, "label_link_speed")), "--:--");
+                gtk_label_set_text (GTK_LABEL (WID (editor->builder, "label_interface")), "--:--");
 
         ret = g_variant_lookup (ethernet, "Address", "s", &mac);
         if (ret)
