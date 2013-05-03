@@ -338,10 +338,37 @@ proxy_method_changed (GtkComboBox *combo, gpointer user_data)
         } else if (active == 1) {
                 proxy_setup_entry (editor, "auto");
 
-                editor->update_proxy = TRUE;
-                net_connection_editor_update_apply (editor);
-        } else
+                if (gtk_entry_get_text_length (GTK_ENTRY (WID (editor->builder, "proxy_url"))) > 0) {
+                        editor->update_proxy = TRUE;
+                        net_connection_editor_update_apply (editor);
+                }
+        } else {
                 proxy_setup_entry (editor, "manual");
+                if (gtk_entry_get_text_length (GTK_ENTRY (WID (editor->builder, "proxy_servers"))) > 0) {
+                        editor->update_proxy = TRUE;
+                        net_connection_editor_update_apply (editor);
+                }
+        }
+}
+
+static void
+proxy_url_text_changed (NetConnectionEditor *editor)
+{
+        GtkEntry *entry;
+        guint16 len;
+
+        if (g_strcmp0 (editor->proxy_method, "auto") != 0)
+                return;
+
+        entry = GTK_ENTRY (WID (editor->builder, "proxy_url"));
+
+        len = gtk_entry_get_text_length (entry);
+        if (len == 0)
+                editor->update_proxy = FALSE;
+        else
+                editor->update_proxy = TRUE;
+
+        net_connection_editor_update_apply (editor);
 }
 
 static void
@@ -1382,6 +1409,11 @@ net_connection_editor_init (NetConnectionEditor *editor)
                           "changed",
                           G_CALLBACK (proxy_method_changed),
                           editor);
+
+        g_signal_connect_swapped (GTK_ENTRY (WID (editor->builder, "proxy_url")),
+                                  "notify::text-length",
+                                  G_CALLBACK (proxy_url_text_changed),
+                                  editor);
 
         g_signal_connect_swapped (GTK_ENTRY (WID (editor->builder, "proxy_servers")),
                                   "notify::text-length",
