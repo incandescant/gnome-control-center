@@ -1982,8 +1982,8 @@ cc_wifi_tether_switch_toggle (GtkSwitch *sw,
 
         cc_set_tethering_image (priv);
 
-        if (enable == priv->wifi_tethered)
-                return;
+        /* if (enable == priv->wifi_tethered) */
+        /*         return; */
 
         if (enable) {
                 gtk_widget_set_sensitive (GTK_WIDGET (WID (priv->builder, "entry_ssid")), TRUE);
@@ -2213,6 +2213,9 @@ cc_setup_hotspot (GtkButton *button, gpointer user_data)
                 window = cc_shell_get_toplevel (cc_panel_get_shell (CC_PANEL (panel)));
 
                 priv->tethering = GTK_DIALOG (WID (priv->builder, "dialog_tethering"));
+
+                g_signal_connect (priv->tethering, "delete-event", gtk_widget_hide_on_delete, NULL);
+
                 gtk_window_set_transient_for (GTK_WINDOW (priv->tethering), window);
 
                 btn = GTK_WIDGET (WID (priv->builder, "button_cancel"));
