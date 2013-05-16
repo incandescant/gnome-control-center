@@ -228,10 +228,45 @@ struct _CcNetworkPanelPrivate
 
 GHashTable *services;
 
+static gboolean
+clear_list_store (GtkTreeModel *model,
+                  GtkTreePath *path,
+                  GtkTreeIter *iter,
+                  gpointer data)
+{
+        gint prop_id;
+        guint pulse_id;
+        Service *service;
+
+        if (!iter || !model)
+                return TRUE;
+
+        gtk_tree_model_get (model, iter,
+                            COLUMN_PROP_ID,
+                            &prop_id,
+                            COLUMN_PULSE_ID,
+                            &pulse_id,
+                            COLUMN_GDBUSPROXY,
+                            &service,
+                            -1);
+
+        if (service && prop_id)
+                g_signal_handler_disconnect (service, prop_id);
+
+        if (pulse_id)
+                g_source_remove (pulse_id);
+
+        if (service)
+                g_object_unref (service);
+
+        return FALSE;
+}
+
 static void
 cc_network_panel_dispose (GObject *object)
 {
         CcNetworkPanelPrivate *priv = CC_NETWORK_PANEL (object)->priv;
+        GtkListStore *liststore;
 
         if (priv->cancellable != NULL)
                 g_cancellable_cancel (priv->cancellable);
@@ -240,23 +275,46 @@ cc_network_panel_dispose (GObject *object)
 
         if (priv->watch_id)
                 g_bus_unwatch_name (priv->watch_id);
+
         priv->watch_id = 0;
 
         if (priv->manager) {
-                if (priv->mgr_prop_id)
-                        g_signal_handler_disconnect (priv->manager, priv->mgr_prop_id);
-                if (priv->tech_added_id)
-                        g_signal_handler_disconnect (priv->manager, priv->tech_added_id);
-                if (priv->tech_removed_id)
-                        g_signal_handler_disconnect (priv->manager, priv->tech_removed_id);
-                if (priv->serv_id)
-                        g_signal_handler_disconnect (priv->manager, priv->serv_id);
-
                 g_object_unref (priv->manager);
                 priv->manager = NULL;
         }
 
-        g_clear_object (&priv->manager);
+        if (priv->wifi) {
+                g_object_unref (priv->wifi);
+                priv->wifi = NULL;
+        }
+
+        if (priv->bluetooth) {
+                g_object_unref (priv->bluetooth);
+                priv->bluetooth = NULL;
+        }
+
+        if (priv->ethernet) {
+                g_object_unref (priv->ethernet);
+                priv->ethernet = NULL;
+        }
+
+        if (priv->cellular) {
+                g_object_unref (priv->cellular);
+                priv->cellular = NULL;
+        }
+
+        if (priv->builder) {
+                liststore = GTK_LIST_STORE (WID (priv->builder, "liststore_services"));
+
+                gtk_tree_model_foreach (GTK_TREE_MODEL (liststore), clear_list_store, NULL);
+
+                gtk_list_store_clear (liststore);
+
+                g_object_unref (priv->builder);
+                priv->builder = NULL;
+        }
+
+        g_hash_table_remove_all (services);
 
         G_OBJECT_CLASS (cc_network_panel_parent_class)->dispose (object);
 }
@@ -398,15 +456,10 @@ panel_set_scan_cb (GObject      *source,
                    GAsyncResult *res,
                    gpointer      user_data)
 {
-        CcNetworkPanel *panel = user_data;
-        CcNetworkPanelPrivate *priv = panel->priv;
         GError *error = NULL;
         gint err_code;
 
-        if (!priv->wifi)
-                return;
-
-        if (!technology_call_scan_finish (priv->wifi, res, &error)) {
+        if (!technology_call_scan_finish ((Technology *) source, res, &error)) {
                 err_code = error->code;
 
                 /* Reset the switch if error is not AlreadyEnabled/AlreadyDisabled */
@@ -430,7 +483,7 @@ panel_set_scan (CcNetworkPanel *panel)
         technology_call_scan (priv->wifi,
                               priv->cancellable,
                               panel_set_scan_cb,
-                              panel);
+                              NULL);
 }
 
 /* Technology section starts */
@@ -611,8 +664,10 @@ wifi_property_changed (Technology *wifi,
                        GVariant *value,
                        CcNetworkPanel *panel)
 {
-        CcNetworkPanelPrivate *priv = panel->priv;
+        CcNetworkPanelPrivate *priv;
         gboolean powered;
+
+        priv = panel->priv;
 
         if (!g_strcmp0 (property, "Powered")) {
                 powered  = g_variant_get_boolean (g_variant_get_variant (value));
@@ -645,10 +700,12 @@ wifi_set_powered (GObject      *source,
                   gpointer      user_data)
 {
         CcNetworkPanel *panel = user_data;
-        CcNetworkPanelPrivate *priv = panel->priv;
+        CcNetworkPanelPrivate *priv;
         gboolean powered;
         GError *error = NULL;
         gint err_code;
+
+        priv = panel->priv;
 
         if (!priv->wifi)
                 return;
@@ -1260,8 +1317,8 @@ service_property_changed (Service *service,
                           GVariant *value,
                           CcNetworkPanel *panel)
 {
-        CcNetworkPanelPrivate *priv = panel->priv;
-        GtkListStore *liststore_services;
+        CcNetworkPanelPrivate *priv;
+        GtkListStore *liststore_services = NULL;
 
         GtkTreeRowReference *row;
         GtkTreePath *tree_path;
@@ -1284,10 +1341,15 @@ service_property_changed (Service *service,
         gboolean update_ipv6 = FALSE;
         gboolean update_domains = FALSE;
         gboolean update_nameservers = FALSE;
+        gboolean ret;
 
         path = g_dbus_proxy_get_object_path ((GDBusProxy *) service);
 
+        priv = (CcNetworkPanelPrivate *)panel->priv;
+
         liststore_services = GTK_LIST_STORE (WID (priv->builder, "liststore_services"));
+        if (liststore_services == NULL)
+                return;
 
         row = g_hash_table_lookup (services, path);
 
@@ -1296,7 +1358,12 @@ service_property_changed (Service *service,
 
         tree_path = gtk_tree_row_reference_get_path (row);
 
-        gtk_tree_model_get_iter ((GtkTreeModel *) liststore_services, &iter, tree_path);
+        ret = gtk_tree_model_get_iter ((GtkTreeModel *) liststore_services, &iter, tree_path);
+
+        if (!ret) {
+                g_printerr ("no liststore found");
+                return;
+        }
 
         if (!g_strcmp0 (property, "Strength")) {
                 strength = (gchar ) g_variant_get_byte (g_variant_get_variant (value));
@@ -1834,7 +1901,7 @@ activate_service_cb (PanelCellRendererText *cell,
         if (!g_strcmp0 (state, "online") || !g_strcmp0 (state, "ready"))
                 service_call_disconnect (service, priv->cancellable, service_disconnect_cb, service);
         else if (!g_strcmp0 (state, "idle") || !g_strcmp0 (state, "failure"))
-                service_call_connect (service, priv->cancellable, service_connect_cb, service);
+                service_call_connect (service, NULL, service_connect_cb, service);
 
         if (!g_strcmp0 (state, "failure"))
                 panel_set_scan (panel);
