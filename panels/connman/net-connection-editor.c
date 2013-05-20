@@ -256,8 +256,9 @@ service_removed (GObject      *source,
         if (!service_call_remove_finish (service, res, &error)) {
                 g_warning ("Could not remove Service: %s", error->message);
                 g_error_free (error);
-                return;
         }
+
+        g_signal_emit (editor, signals[DONE], 0, FALSE);
 }
 
 static void
