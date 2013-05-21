@@ -684,36 +684,63 @@ editor_update_ipv4 (NetConnectionEditor *editor)
         else if (!g_strcmp0 (method, "dhcp")) {
                 gtk_combo_box_set_active (GTK_COMBO_BOX (WID (editor->builder, "comboboxtext_ipv4_method")), 1);
 
-                g_variant_lookup (ipv4, "Address", "s", &address);
-                gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv4_address")), address);
+                ret = g_variant_lookup (ipv4, "Address", "s", &address);
+                if (ret)
+                        gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv4_address")), address);
+                else
+                        gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv4_address")), "");
 
-                g_variant_lookup (ipv4, "Netmask", "s", &netmask);
-                gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv4_netmask")), netmask);
+                ret = g_variant_lookup (ipv4, "Netmask", "s", &netmask);
+                if (ret)
+                        gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv4_netmask")), netmask);
+                else
+                        gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv4_netmask")), "");
 
-                g_variant_lookup (ipv4, "Gateway", "s", &gateway);
-                gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv4_gateway")), gateway);
+                ret = g_variant_lookup (ipv4, "Gateway", "s", &gateway);
+                if (ret)
+                        gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv4_gateway")), gateway);
+                else
+                        gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv4_gateway")), "");
         } else if (!g_strcmp0 (method, "manual")) {
                 gtk_combo_box_set_active (GTK_COMBO_BOX (WID (editor->builder, "comboboxtext_ipv4_method")), 2);
 
-                g_variant_lookup (ipv4, "Address", "s", &address);
-                gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv4_address")), address);
+                ret = g_variant_lookup (ipv4, "Address", "s", &address);
+                if (ret)
+                        gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv4_address")), address);
+                else
+                        gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv4_address")), "");
 
-                g_variant_lookup (ipv4, "Netmask", "s", &netmask);
-                gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv4_netmask")), netmask);
+                ret = g_variant_lookup (ipv4, "Netmask", "s", &netmask);
+                if (ret)
+                        gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv4_netmask")), netmask);
+                else
+                        gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv4_netmask")), "");
 
-                g_variant_lookup (ipv4, "Gateway", "s", &gateway);
-                gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv4_gateway")), gateway);
+                ret = g_variant_lookup (ipv4, "Gateway", "s", &gateway);
+                if (ret)
+                        gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv4_gateway")), gateway);
+                else
+                        gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv4_gateway")), "");
         } else {
                 gtk_combo_box_set_active (GTK_COMBO_BOX (WID (editor->builder, "comboboxtext_ipv4_method")), 3);
 
-                g_variant_lookup (ipv4, "Address", "s", &address);
-                gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv4_address")), address);
+                ret = g_variant_lookup (ipv4, "Address", "s", &address);
+                if (ret)
+                        gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv4_address")), address);
+                else
+                        gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv4_address")), "");
 
-                g_variant_lookup (ipv4, "Netmask", "s", &netmask);
-                gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv4_netmask")), netmask);
+                ret = g_variant_lookup (ipv4, "Netmask", "s", &netmask);
+                if (ret)
+                        gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv4_netmask")), netmask);
+                else
+                        gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv4_netmask")), "");
 
-                g_variant_lookup (ipv4, "Gateway", "s", &gateway);
-                gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv4_gateway")), gateway);
+                ret = g_variant_lookup (ipv4, "Gateway", "s", &gateway);
+                if (ret)
+                        gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv4_gateway")), gateway);
+                else
+                        gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv4_gateway")), "");
         }
 
         if (!g_strcmp0 (method, "fixed"))
@@ -959,51 +986,67 @@ editor_update_ipv6 (NetConnectionEditor *editor)
                 else
                         gtk_combo_box_set_active (GTK_COMBO_BOX (WID (editor->builder, "comboboxtext_ipv6_privacy")), 1);
 
-                g_variant_lookup (ipv6, "Address", "s", &address);
-                gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv6_address")), address);
+                ret = g_variant_lookup (ipv6, "Address", "s", &address);
+                if (ret)
+                        gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv6_address")), address);
+                else
+                        gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv6_address")), "");
 
                 ret = g_variant_lookup (ipv6, "PrefixLength", "y", &prefix);
                 if (ret)
                         gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv6_prefix")), g_strdup_printf ("%i", prefix));
 
-                g_variant_lookup (ipv6, "Gateway", "s", &gateway);
-                gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv6_gateway")), gateway);
+                ret = g_variant_lookup (ipv6, "Gateway", "s", &gateway);
+                if (ret)
+                        gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv6_gateway")), gateway);
+                else
+                        gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv6_gateway")), "");
         } else if (!g_strcmp0 (method, "manual")) {
                 gtk_combo_box_set_active (GTK_COMBO_BOX (WID (editor->builder, "comboboxtext_ipv6_method")), 2);
 
-                g_variant_lookup (ipv6, "Address", "s", &address);
-                gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv6_address")), address);
+                ret = g_variant_lookup (ipv6, "Address", "s", &address);
+                if (ret)
+                        gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv6_address")), address);
+                else
+                        gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv6_address")), "");
 
                 ret = g_variant_lookup (ipv6, "PrefixLength", "y", &prefix);
                 if (ret)
                         gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv6_prefix")), g_strdup_printf ("%i", prefix));
 
-                g_variant_lookup (ipv6, "Gateway", "s", &gateway);
-                gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv6_gateway")), gateway);
+                ret = g_variant_lookup (ipv6, "Gateway", "s", &gateway);
+                if (ret)
+                        gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv6_gateway")), gateway);
+                else
+                        gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv6_gateway")), "");
         } else if (!g_strcmp0 (method, "6to4")) {
                 gtk_combo_box_set_active (GTK_COMBO_BOX (WID (editor->builder, "comboboxtext_ipv6_method")), 3);
 
-                g_variant_lookup (ipv6, "Address", "s", &address);
-                gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv6_address")), address);
+                ret = g_variant_lookup (ipv6, "Address", "s", &address);
+                if (ret)
+                        gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv6_address")), address);
 
                 ret = g_variant_lookup (ipv6, "PrefixLength", "y", &prefix);
                 if (ret)
                         gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv6_prefix")), g_strdup_printf ("%i", prefix));
 
-                g_variant_lookup (ipv6, "Gateway", "s", &gateway);
-                gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv6_gateway")), gateway);
+                ret = g_variant_lookup (ipv6, "Gateway", "s", &gateway);
+                if (ret)
+                        gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv6_gateway")), gateway);
         } else {
                 gtk_combo_box_set_active (GTK_COMBO_BOX (WID (editor->builder, "comboboxtext_ipv6_method")), 4);
 
-                g_variant_lookup (ipv6, "Address", "s", &address);
-                gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv6_address")), address);
+                ret = g_variant_lookup (ipv6, "Address", "s", &address);
+                if (ret)
+                        gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv6_address")), address);
 
                 ret = g_variant_lookup (ipv6, "PrefixLength", "y", &prefix);
                 if (ret)
                         gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv6_prefix")), g_strdup_printf ("%i", prefix));
 
-                g_variant_lookup (ipv6, "Gateway", "s", &gateway);
-                gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv6_gateway")), gateway);
+                ret = g_variant_lookup (ipv6, "Gateway", "s", &gateway);
+                if (ret)
+                        gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv6_gateway")), gateway);
         }
 
         if (!g_strcmp0 (method, "fixed"))
