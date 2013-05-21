@@ -2281,7 +2281,7 @@ cc_setup_hotspot (GtkButton *button, gpointer user_data)
 
                 priv->tethering = GTK_DIALOG (WID (priv->builder, "dialog_tethering"));
 
-                g_signal_connect (priv->tethering, "delete-event", gtk_widget_hide_on_delete, NULL);
+                g_signal_connect (priv->tethering, "delete-event", G_CALLBACK (gtk_widget_hide_on_delete), NULL);
 
                 gtk_window_set_transient_for (GTK_WINDOW (priv->tethering), window);
 

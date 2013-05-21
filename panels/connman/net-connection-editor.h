@@ -47,6 +47,8 @@ struct _NetConnectionEditor
         GtkBuilder      *builder;
         GtkWidget       *window;
 
+        gboolean update_autoconnect;
+
         gboolean update_proxy;
         gchar *proxy_method;
 

@@ -70,7 +70,8 @@ net_connection_editor_update_apply (NetConnectionEditor *editor)
 {
 
         if (editor->update_proxy || editor->update_ipv4 ||
-            editor->update_ipv6 || editor->update_domains || editor->update_nameservers)
+            editor->update_ipv6 || editor->update_domains ||
+            editor->update_nameservers || editor->update_autoconnect)
                 gtk_widget_set_sensitive (GTK_WIDGET (WID (editor->builder, "apply_button")), TRUE);
         else
                 gtk_widget_set_sensitive (GTK_WIDGET (WID (editor->builder, "apply_button")), FALSE);
@@ -151,6 +152,9 @@ editor_update_details (NetConnectionEditor *editor)
                 gtk_label_set_text (GTK_LABEL (WID (editor->builder, "label_dns")), g_strjoinv (",", (gchar **) ns));
         else
                 gtk_label_set_text (GTK_LABEL (WID (editor->builder, "label_dns")), "N/A");
+
+        editor->update_autoconnect = FALSE;
+        net_connection_editor_update_apply (editor);
 }
 
 static void
@@ -199,6 +203,34 @@ done:
 
 static void
 autoconnect_toggle (NetConnectionEditor *editor)
+{
+        GtkTreeModel *model;
+
+        GtkTreePath *tree_path;
+        GtkTreeIter iter;
+        Service *service;
+        gboolean autoconnect, ac;
+
+        model =  gtk_tree_row_reference_get_model (editor->service_row);
+        tree_path = gtk_tree_row_reference_get_path (editor->service_row);
+        gtk_tree_model_get_iter (model, &iter, tree_path);
+
+        gtk_tree_model_get (model, &iter,
+                            COLUMN_GDBUSPROXY, &service,
+                            COLUMN_AUTOCONNECT, &autoconnect,
+                            -1);
+
+        ac = gtk_switch_get_active (GTK_SWITCH (WID (editor->builder, "switch_autoconnect")));
+        if (ac == autoconnect)
+                editor->update_autoconnect = FALSE;
+        else
+                editor->update_autoconnect = TRUE;
+
+        net_connection_editor_update_apply (editor);
+}
+
+static void
+editor_set_autoconnect (NetConnectionEditor *editor)
 {
         GtkTreeModel *model;
 
@@ -1407,6 +1439,10 @@ apply_edits (NetConnectionEditor *editor)
                editor_set_domains (editor);
         if (editor->update_nameservers)
                editor_set_nameservers (editor);
+        if (editor->update_autoconnect)
+               editor_set_autoconnect (editor);
+
+        gtk_widget_set_sensitive (GTK_WIDGET (WID (editor->builder, "apply_button")), FALSE);
 }
 
 static void
