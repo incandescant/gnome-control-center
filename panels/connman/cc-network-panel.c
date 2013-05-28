@@ -2319,9 +2319,15 @@ cc_setup_hotspot (GtkButton *button, gpointer user_data)
                                           priv);
         }
 
-        gtk_widget_set_sensitive (GTK_WIDGET (WID (priv->builder, "button_apply")), FALSE);
-        gtk_widget_set_sensitive (GTK_WIDGET (WID (priv->builder, "entry_ssid")), FALSE);
-        gtk_widget_set_sensitive (GTK_WIDGET (WID (priv->builder, "entry_passphrase")), FALSE);
+        if (priv->wifi_tethered) {
+                gtk_widget_set_sensitive (GTK_WIDGET (WID (priv->builder, "button_apply")), TRUE);
+                gtk_widget_set_sensitive (GTK_WIDGET (WID (priv->builder, "entry_ssid")), TRUE);
+                gtk_widget_set_sensitive (GTK_WIDGET (WID (priv->builder, "entry_passphrase")), TRUE);
+        } else {
+                gtk_widget_set_sensitive (GTK_WIDGET (WID (priv->builder, "button_apply")), FALSE);
+                gtk_widget_set_sensitive (GTK_WIDGET (WID (priv->builder, "entry_ssid")), FALSE);
+                gtk_widget_set_sensitive (GTK_WIDGET (WID (priv->builder, "entry_passphrase")), FALSE);
+        }
 
         priv->tether_wifi_toggle = FALSE;
         priv->tether_bt_toggle = FALSE;
