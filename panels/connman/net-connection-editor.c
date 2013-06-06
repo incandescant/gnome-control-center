@@ -1443,6 +1443,7 @@ apply_edits (NetConnectionEditor *editor)
                editor_set_autoconnect (editor);
 
         gtk_widget_set_sensitive (GTK_WIDGET (WID (editor->builder, "apply_button")), FALSE);
+        gtk_widget_hide (GTK_WIDGET (editor->window));
 }
 
 static void
