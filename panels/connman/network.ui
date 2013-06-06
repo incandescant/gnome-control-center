@@ -140,7 +140,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="margin_left">35</property>
-                <property name="label" translatable="yes">HotSpot via Bluetooth</property>
+                <property name="label" translatable="yes">Hotspot via Bluetooth</property>
                 <attributes>
                   <attribute name="font-desc" value="&lt;Enter Value&gt; 10"/>
                   <attribute name="weight" value="ultralight"/>
@@ -157,7 +157,7 @@
               <object class="GtkLabel" id="label_tether_wifi">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="label" translatable="yes">HotSpot via WiFi</property>
+                <property name="label" translatable="yes">Hotspot via WiFi</property>
                 <attributes>
                   <attribute name="font-desc" value="&lt;Enter Value&gt; 10"/>
                   <attribute name="weight" value="ultralight"/>
@@ -175,7 +175,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="margin_right">45</property>
-                <property name="label" translatable="yes">HotSpot via Ethernet</property>
+                <property name="label" translatable="yes">Hotspot via Ethernet</property>
                 <attributes>
                   <attribute name="font-desc" value="&lt;Enter Value&gt; 10"/>
                   <attribute name="weight" value="ultralight"/>
