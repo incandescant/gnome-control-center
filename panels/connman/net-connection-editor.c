@@ -654,8 +654,6 @@ ipv4_method_changed (GtkComboBox *combo, gpointer user_data)
                 net_connection_editor_update_apply (editor);
         } else if (active == 2) {
                 ipv4_setup_entry (editor, "manual");
-        } else {
-                gtk_combo_box_set_active (GTK_COMBO_BOX (WID (editor->builder, "comboboxtext_ipv4_method")), 0);
         }
 }
 
@@ -709,8 +707,6 @@ editor_update_ipv4 (NetConnectionEditor *editor)
         if (!ret)
                 method = "off";
 
-        ipv4_setup_entry (editor, method);
-
         if (!g_strcmp0 (method, "off"))
                 gtk_combo_box_set_active (GTK_COMBO_BOX (WID (editor->builder, "comboboxtext_ipv4_method")), 0);
         else if (!g_strcmp0 (method, "dhcp")) {
@@ -753,8 +749,8 @@ editor_update_ipv4 (NetConnectionEditor *editor)
                         gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv4_gateway")), gateway);
                 else
                         gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv4_gateway")), "");
-        } else {
-                gtk_combo_box_set_active (GTK_COMBO_BOX (WID (editor->builder, "comboboxtext_ipv4_method")), 3);
+        } else if (!g_strcmp0 (method, "fixed")) {
+                gtk_combo_box_set_active (GTK_COMBO_BOX (WID (editor->builder, "comboboxtext_ipv4_method")), 2);
 
                 ret = g_variant_lookup (ipv4, "Address", "s", &address);
                 if (ret)
@@ -774,6 +770,8 @@ editor_update_ipv4 (NetConnectionEditor *editor)
                 else
                         gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv4_gateway")), "");
         }
+
+        ipv4_setup_entry (editor, method);
 
         if (!g_strcmp0 (method, "fixed"))
                 gtk_widget_set_sensitive (GTK_WIDGET (WID (editor->builder, "comboboxtext_ipv4_method")), FALSE);
@@ -944,8 +942,6 @@ ipv6_method_changed (GtkComboBox *combo, gpointer user_data)
                 net_connection_editor_update_apply (editor);
         } else if (active == 2) {
                 ipv6_setup_entry (editor, "manual");
-        } else {
-                gtk_combo_box_set_active (GTK_COMBO_BOX (WID (editor->builder, "comboboxtext_ipv6_method")), 0);
         }
 }
 
@@ -999,8 +995,6 @@ editor_update_ipv6 (NetConnectionEditor *editor)
         ret = g_variant_lookup (ipv6, "Method", "s", &method);
         if (!ret)
                 method = "off";
-
-        ipv6_setup_entry (editor, method);
 
         if (!g_strcmp0 (method, "off"))
                 gtk_combo_box_set_active (GTK_COMBO_BOX (WID (editor->builder, "comboboxtext_ipv6_method")), 0);
@@ -1065,8 +1059,8 @@ editor_update_ipv6 (NetConnectionEditor *editor)
                 ret = g_variant_lookup (ipv6, "Gateway", "s", &gateway);
                 if (ret)
                         gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv6_gateway")), gateway);
-        } else {
-                gtk_combo_box_set_active (GTK_COMBO_BOX (WID (editor->builder, "comboboxtext_ipv6_method")), 4);
+        } else { /* fixed */
+                gtk_combo_box_set_active (GTK_COMBO_BOX (WID (editor->builder, "comboboxtext_ipv6_method")), 2);
 
                 ret = g_variant_lookup (ipv6, "Address", "s", &address);
                 if (ret)
@@ -1080,6 +1074,8 @@ editor_update_ipv6 (NetConnectionEditor *editor)
                 if (ret)
                         gtk_entry_set_text (GTK_ENTRY (WID (editor->builder, "ipv6_gateway")), gateway);
         }
+
+        ipv6_setup_entry (editor, method);
 
         if (!g_strcmp0 (method, "fixed"))
                 gtk_widget_set_sensitive (GTK_WIDGET (WID (editor->builder, "comboboxtext_ipv6_method")), FALSE);

@@ -846,7 +846,6 @@
                           <item>Disabled</item>
                           <item translatable="yes">DHCP</item>
                           <item>Manual</item>
-                          <item translatable="yes">Fixed</item>
                         </items>
                       </object>
                       <packing>
@@ -995,7 +994,6 @@
                           <item translatable="yes">Automatic</item>
                           <item translatable="yes">Manual</item>
                           <item translatable="yes">6to4</item>
-                          <item translatable="yes">Fixed</item>
                         </items>
                       </object>
                       <packing>
