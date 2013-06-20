@@ -37,7 +37,7 @@
   </object>
   <object class="GtkDialog" id="dialog_ce">
     <property name="width_request">720</property>
-    <property name="height_request">400</property>
+    <property name="height_request">500</property>
     <property name="can_focus">False</property>
     <property name="border_width">5</property>
     <property name="title" translatable="yes">Advanced Network Settings</property>
@@ -562,81 +562,12 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkLabel" id="label_url">
+                      <object class="GtkLabel" id="label_http_servers">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="margin_top">7</property>
                         <property name="xalign">0</property>
-                        <property name="label" translatable="yes">Proxy URL</property>
-                        <attributes>
-                          <attribute name="font-desc" value="&lt;Enter Value&gt; 10"/>
-                          <attribute name="weight" value="ultralight"/>
-                        </attributes>
-                      </object>
-                      <packing>
-                        <property name="left_attach">0</property>
-                        <property name="top_attach">6</property>
-                        <property name="width">1</property>
-                        <property name="height">1</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkEntry" id="proxy_url">
-                        <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                        <property name="hexpand">True</property>
-                        <property name="invisible_char">●</property>
-                        <property name="invisible_char_set">True</property>
-                      </object>
-                      <packing>
-                        <property name="left_attach">0</property>
-                        <property name="top_attach">7</property>
-                        <property name="width">1</property>
-                        <property name="height">1</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkLabel" id="label_excludes">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="margin_top">7</property>
-                        <property name="xalign">0</property>
-                        <property name="label" translatable="yes">Excludes</property>
-                        <attributes>
-                          <attribute name="font-desc" value="&lt;Enter Value&gt; 10"/>
-                          <attribute name="weight" value="ultralight"/>
-                        </attributes>
-                      </object>
-                      <packing>
-                        <property name="left_attach">0</property>
-                        <property name="top_attach">4</property>
-                        <property name="width">1</property>
-                        <property name="height">1</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkEntry" id="proxy_excludes">
-                        <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                        <property name="hexpand">True</property>
-                        <property name="invisible_char">●</property>
-                        <property name="invisible_char_set">True</property>
-                        <property name="placeholder_text">List of hosts which can be accessed directly</property>
-                      </object>
-                      <packing>
-                        <property name="left_attach">0</property>
-                        <property name="top_attach">5</property>
-                        <property name="width">1</property>
-                        <property name="height">1</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkLabel" id="label_servers">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="margin_top">7</property>
-                        <property name="xalign">0</property>
-                        <property name="label" translatable="yes">Servers</property>
+                        <property name="label" translatable="yes">HTTP Servers</property>
                         <attributes>
                           <attribute name="font-desc" value="&lt;Enter Value&gt; 10"/>
                           <attribute name="weight" value="ultralight"/>
@@ -650,13 +581,17 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkEntry" id="proxy_servers">
+                      <object class="GtkEntry" id="http_proxy_servers">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="hexpand">True</property>
                         <property name="invisible_char">●</property>
                         <property name="invisible_char_set">True</property>
-                        <property name="placeholder_text">List of proxy URIs (server.example.com:911 or socks://abc:123)</property>
+                        <property name="secondary_icon_stock">gtk-dialog-info</property>
+                        <property name="secondary_icon_activatable">False</property>
+                        <property name="secondary_icon_sensitive">False</property>
+                        <property name="secondary_icon_tooltip_text" translatable="yes">Comma-separated list of http proxy URL's with ports (if required) i.e. "http://server.example.com:911,http://proxy.example.com"</property>
+                        <property name="placeholder_text">http://web-proxy.example.com</property>
                       </object>
                       <packing>
                         <property name="left_attach">0</property>
@@ -681,6 +616,207 @@
                       <packing>
                         <property name="left_attach">0</property>
                         <property name="top_attach">1</property>
+                        <property name="width">1</property>
+                        <property name="height">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkEntry" id="proxy_url">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="has_tooltip">True</property>
+                        <property name="hexpand">True</property>
+                        <property name="invisible_char">●</property>
+                        <property name="invisible_char_set">True</property>
+                        <property name="secondary_icon_stock">gtk-dialog-info</property>
+                        <property name="secondary_icon_activatable">False</property>
+                        <property name="secondary_icon_sensitive">False</property>
+                        <property name="secondary_icon_tooltip_text" translatable="yes">Proxy configuration URL i.e. "http://example.com/autoproxy.js"</property>
+                        <property name="secondary_icon_tooltip_markup" translatable="yes">Proxy configuration URL i.e. &amp;quot;http://example.com/autoproxy.js&amp;quot;</property>
+                        <property name="placeholder_text">http://proxy-server.tld/autoproxy.js</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">13</property>
+                        <property name="width">1</property>
+                        <property name="height">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="label_url">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="margin_top">7</property>
+                        <property name="xalign">0</property>
+                        <property name="label" translatable="yes">Proxy configuration URL</property>
+                        <attributes>
+                          <attribute name="font-desc" value="&lt;Enter Value&gt; 10"/>
+                          <attribute name="weight" value="ultralight"/>
+                        </attributes>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">12</property>
+                        <property name="width">1</property>
+                        <property name="height">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkEntry" id="proxy_excludes">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="has_tooltip">True</property>
+                        <property name="hexpand">True</property>
+                        <property name="invisible_char">●</property>
+                        <property name="invisible_char_set">True</property>
+                        <property name="secondary_icon_stock">gtk-dialog-info</property>
+                        <property name="secondary_icon_activatable">False</property>
+                        <property name="secondary_icon_sensitive">False</property>
+                        <property name="secondary_icon_tooltip_text" translatable="yes">Comma-separated list of hosts which can be accessed directly i.e. "example.com,example-extranet.com,intranet.local"</property>
+                        <property name="placeholder_text">example.com,my-job.com,internal.local</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">11</property>
+                        <property name="width">1</property>
+                        <property name="height">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="label_excludes">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="margin_top">7</property>
+                        <property name="xalign">0</property>
+                        <property name="label" translatable="yes">Excludes</property>
+                        <attributes>
+                          <attribute name="font-desc" value="&lt;Enter Value&gt; 10"/>
+                          <attribute name="weight" value="ultralight"/>
+                        </attributes>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">10</property>
+                        <property name="width">1</property>
+                        <property name="height">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="label_https_servers">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="margin_top">7</property>
+                        <property name="xalign">0</property>
+                        <property name="label" translatable="yes">HTTPS Servers</property>
+                        <attributes>
+                          <attribute name="font-desc" value="&lt;Enter Value&gt; 10"/>
+                          <attribute name="weight" value="ultralight"/>
+                        </attributes>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">4</property>
+                        <property name="width">1</property>
+                        <property name="height">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="label_ftp_servers">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="margin_top">7</property>
+                        <property name="xalign">0</property>
+                        <property name="label" translatable="yes">FTP Servers</property>
+                        <attributes>
+                          <attribute name="font-desc" value="&lt;Enter Value&gt; 10"/>
+                          <attribute name="weight" value="ultralight"/>
+                        </attributes>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">6</property>
+                        <property name="width">1</property>
+                        <property name="height">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="label_socks_servers">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="margin_top">7</property>
+                        <property name="xalign">0</property>
+                        <property name="label" translatable="yes">SOCKS Servers</property>
+                        <attributes>
+                          <attribute name="font-desc" value="&lt;Enter Value&gt; 10"/>
+                          <attribute name="weight" value="ultralight"/>
+                        </attributes>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">8</property>
+                        <property name="width">1</property>
+                        <property name="height">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkEntry" id="https_proxy_servers">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="has_tooltip">True</property>
+                        <property name="hexpand">True</property>
+                        <property name="invisible_char">●</property>
+                        <property name="invisible_char_set">True</property>
+                        <property name="secondary_icon_stock">gtk-dialog-info</property>
+                        <property name="secondary_icon_activatable">False</property>
+                        <property name="secondary_icon_sensitive">False</property>
+                        <property name="secondary_icon_tooltip_text" translatable="yes">Comma-separated list of https proxy URL's with ports (if required) i.e. "https://ssl.example.com:911,https://proxy.example.com"</property>
+                        <property name="placeholder_text">https://ssl-proxy.example.com</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">5</property>
+                        <property name="width">1</property>
+                        <property name="height">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkEntry" id="ftp_proxy_servers">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="has_tooltip">True</property>
+                        <property name="hexpand">True</property>
+                        <property name="invisible_char">●</property>
+                        <property name="invisible_char_set">True</property>
+                        <property name="secondary_icon_stock">gtk-dialog-info</property>
+                        <property name="secondary_icon_activatable">False</property>
+                        <property name="secondary_icon_sensitive">False</property>
+                        <property name="secondary_icon_tooltip_text" translatable="yes">Comma-separated list of ftp proxy URL's with ports (if required) i.e. "ftp://server.example.com:1080,ftp://proxy.example.com"</property>
+                        <property name="placeholder_text">ftp://ftp-proxy.example.com</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">7</property>
+                        <property name="width">1</property>
+                        <property name="height">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkEntry" id="socks_proxy_servers">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="has_tooltip">True</property>
+                        <property name="hexpand">True</property>
+                        <property name="invisible_char">●</property>
+                        <property name="invisible_char_set">True</property>
+                        <property name="secondary_icon_stock">gtk-dialog-info</property>
+                        <property name="secondary_icon_activatable">False</property>
+                        <property name="secondary_icon_sensitive">False</property>
+                        <property name="secondary_icon_tooltip_text" translatable="yes">Comma-separated list of SOCKS proxy URL's with ports (if required) i.e. "socks://server.example.com:1000,socks://socks-proxy.example.com"</property>
+                        <property name="placeholder_text">socks://socks-proxy.example.com</property>
+                      </object>
+                      <packing>
+                        <property name="left_attach">0</property>
+                        <property name="top_attach">9</property>
                         <property name="width">1</property>
                         <property name="height">1</property>
                       </packing>
