@@ -715,6 +715,18 @@ append_string (GString *gstring, const gchar *append)
         g_free (str);
 }
 
+static gboolean
+has_protocol (const gchar *url)
+{
+        gchar *proto;
+
+        proto = server_get_protocol (url);
+        if (proto)
+                return TRUE;
+
+        return FALSE;
+}
+
 static void
 editor_set_proxy (NetConnectionEditor *editor)
 {
@@ -753,20 +765,48 @@ editor_set_proxy (NetConnectionEditor *editor)
 
                 proxy_list = g_string_new ("");
                 str = (gchar *) gtk_entry_get_text (GTK_ENTRY (WID (editor->builder, "http_proxy_servers")));
-                if (str)
-                        append_string (proxy_list, str);
+                if (str && strlen (str)) {
+                        if (has_protocol (str))
+                                append_string (proxy_list, str);
+                        else {
+                                gchar *url = g_strdup_printf ("http://%s", str);
+                                append_string (proxy_list, (const gchar *)url);
+                                g_free (url);
+                        }
+                }
 
                 str = (gchar *) gtk_entry_get_text (GTK_ENTRY (WID (editor->builder, "https_proxy_servers")));
-                if (str)
-                        append_string (proxy_list, str);
+                if (str && strlen (str)) {
+                        if (has_protocol (str))
+                                append_string (proxy_list, str);
+                        else {
+                                gchar *url = g_strdup_printf ("https://%s", str);
+                                append_string (proxy_list, (const gchar *)url);
+                                g_free (url);
+                        }
+                }
 
                 str = (gchar *) gtk_entry_get_text (GTK_ENTRY (WID (editor->builder, "ftp_proxy_servers")));
-                if (str)
-                        append_string (proxy_list, str);
+                if (str && strlen (str)) {
+                        if (has_protocol (str))
+                                append_string (proxy_list, str);
+                        else {
+                                gchar *url = g_strdup_printf ("ftp://%s", str);
+                                append_string (proxy_list, (const gchar *)url);
+                                g_free (url);
+                        }
+                }
 
                 str = (gchar *) gtk_entry_get_text (GTK_ENTRY (WID (editor->builder, "socks_proxy_servers")));
-                if (str)
-                        append_string (proxy_list, str);
+                if (str && strlen (str)) {
+                        if (has_protocol (str))
+                                append_string (proxy_list, str);
+                        else {
+                                gchar *url = g_strdup_printf ("socks://%s", str);
+                                append_string (proxy_list, (const gchar *)url);
+                                g_free (url);
+                        }
+                }
 
                 if (proxy_list->len > 0) {
                         servers = g_strsplit (proxy_list->str, " ", -1);
