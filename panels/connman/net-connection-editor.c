@@ -1740,13 +1740,13 @@ net_connection_editor_init (NetConnectionEditor *editor)
                           G_CALLBACK (proxy_method_changed),
                           editor);
 
-        g_signal_connect_swapped (GTK_ENTRY (WID (editor->builder, "proxy_url")),
-                                  "notify::text-length",
+        g_signal_connect_swapped (WID (editor->builder, "proxy_url"),
+                                  "changed",
                                   G_CALLBACK (proxy_url_text_changed),
                                   editor);
 
-        g_signal_connect_swapped (GTK_ENTRY (WID (editor->builder, "http_proxy_servers")),
-                                  "notify::text-length",
+        g_signal_connect_swapped (WID (editor->builder, "http_proxy_servers"),
+                                  "changed",
                                   G_CALLBACK (http_proxy_servers_text_changed),
                                   editor);
 
@@ -1755,8 +1755,8 @@ net_connection_editor_init (NetConnectionEditor *editor)
                                   G_CALLBACK (http_proxy_servers_text_changed),
                                   editor);
 
-        g_signal_connect_swapped (GTK_ENTRY (WID (editor->builder, "https_proxy_servers")),
-                                  "notify::text-length",
+        g_signal_connect_swapped (WID (editor->builder, "https_proxy_servers"),
+                                  "changed",
                                   G_CALLBACK (https_proxy_servers_text_changed),
                                   editor);
 
@@ -1765,8 +1765,8 @@ net_connection_editor_init (NetConnectionEditor *editor)
                                   G_CALLBACK (https_proxy_servers_text_changed),
                                   editor);
 
-        g_signal_connect_swapped (GTK_ENTRY (WID (editor->builder, "socks_proxy_servers")),
-                                  "notify::text-length",
+        g_signal_connect_swapped (WID (editor->builder, "socks_proxy_servers"),
+                                  "changed",
                                   G_CALLBACK (socks_proxy_servers_text_changed),
                                   editor);
 
@@ -1785,8 +1785,8 @@ net_connection_editor_init (NetConnectionEditor *editor)
                                   G_CALLBACK (socks_proxy_servers_text_changed),
                                   editor);
 
-        g_signal_connect_swapped (GTK_ENTRY (WID (editor->builder, "proxy_excludes")),
-                                  "notify::text-length",
+        g_signal_connect_swapped (WID (editor->builder, "proxy_excludes"),
+                                  "changed",
                                   G_CALLBACK (proxy_excludes_text_changed),
                                   editor);
 
@@ -1795,18 +1795,18 @@ net_connection_editor_init (NetConnectionEditor *editor)
                           G_CALLBACK (ipv4_method_changed),
                           editor);
 
-        g_signal_connect_swapped (GTK_ENTRY (WID (editor->builder, "ipv4_address")),
-                                  "notify::text-length",
+        g_signal_connect_swapped (WID (editor->builder, "ipv4_address"),
+                                  "changed",
                                   G_CALLBACK (ipv4_address_text_changed),
                                   editor);
 
-        g_signal_connect_swapped (GTK_ENTRY (WID (editor->builder, "ipv4_netmask")),
-                                  "notify::text-length",
+        g_signal_connect_swapped (WID (editor->builder, "ipv4_netmask"),
+                                  "changed",
                                   G_CALLBACK (ipv4_address_text_changed),
                                   editor);
 
-        g_signal_connect_swapped (GTK_ENTRY (WID (editor->builder, "ipv4_gateway")),
-                                  "notify::text-length",
+        g_signal_connect_swapped (WID (editor->builder, "ipv4_gateway"),
+                                  "changed",
                                   G_CALLBACK (ipv4_address_text_changed),
                                   editor);
 
@@ -1815,27 +1815,27 @@ net_connection_editor_init (NetConnectionEditor *editor)
                           G_CALLBACK (ipv6_method_changed),
                           editor);
 
-        g_signal_connect_swapped (GTK_ENTRY (WID (editor->builder, "ipv6_address")),
-                                  "notify::text-length",
+        g_signal_connect_swapped (WID (editor->builder, "ipv6_address"),
+                                  "changed",
                                   G_CALLBACK (ipv6_address_text_changed),
                                   editor);
 
-        g_signal_connect_swapped (GTK_ENTRY (WID (editor->builder, "ipv6_prefix")),
-                                  "notify::text-length",
+        g_signal_connect_swapped (WID (editor->builder, "ipv6_prefix"),
+                                  "changed",
                                   G_CALLBACK (ipv6_address_text_changed),
                                   editor);
 
-        g_signal_connect_swapped (GTK_ENTRY (WID (editor->builder, "ipv6_gateway")),
-                                  "notify::text-length",
+        g_signal_connect_swapped (WID (editor->builder, "ipv6_gateway"),
+                                  "changed",
                                   G_CALLBACK (ipv6_address_text_changed),
                                   editor);
 
-        g_signal_connect_swapped (GTK_ENTRY (WID (editor->builder, "entry_domains")),
-                                  "notify::text-length",
+        g_signal_connect_swapped (WID (editor->builder, "entry_domains"),
+                                  "changed",
                                   G_CALLBACK (domains_text_changed),
                                   editor);
-        g_signal_connect_swapped (GTK_ENTRY (WID (editor->builder, "entry_nameservers")),
-                                  "notify::text-length",
+        g_signal_connect_swapped (WID (editor->builder, "entry_nameservers"),
+                                  "changed",
                                   G_CALLBACK (nameservers_text_changed),
                                   editor);
 }
