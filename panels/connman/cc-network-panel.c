@@ -602,7 +602,6 @@ cc_add_technology_ethernet (const gchar         *path,
                 }
 
                 gtk_widget_set_sensitive (WID (priv->builder, "box_ethernet"), TRUE);
-                gtk_widget_set_sensitive (WID (priv->builder, "switch_tether_ethernet"), TRUE);
 
                 priv->ethernet_id = g_signal_connect (priv->ethernet,
                                                       "property_changed",
@@ -615,6 +614,7 @@ cc_add_technology_ethernet (const gchar         *path,
         if (g_variant_lookup (properties, "Powered", "b", &powered)) {
                 priv->ethernet_powered = powered;
                 gtk_switch_set_active (GTK_SWITCH (WID (priv->builder, "switch_ethernet")), powered);
+                gtk_widget_set_sensitive (WID (priv->builder, "switch_tether_ethernet"), powered);
         }
 
         if (g_variant_lookup (properties, "Tethering", "b", &tethering)) {
@@ -779,7 +779,6 @@ cc_add_technology_wifi (const gchar         *path,
                 }
 
                 gtk_widget_set_sensitive (WID (priv->builder, "box_wifi"), TRUE);
-                gtk_widget_set_sensitive (WID (priv->builder, "switch_tether_wifi"), TRUE);
 
                 priv->wifi_id = g_signal_connect (priv->wifi,
                                                       "property_changed",
@@ -792,6 +791,7 @@ cc_add_technology_wifi (const gchar         *path,
         if (g_variant_lookup (properties, "Powered", "b", &powered)) {
                 priv->wifi_powered = powered;
                 gtk_switch_set_active (GTK_SWITCH (WID (priv->builder, "switch_wifi")), powered);
+                gtk_widget_set_sensitive (WID (priv->builder, "switch_tether_wifi"), powered);
         }
 
         if (g_variant_lookup (properties, "Tethering", "b", &tethering)) {
@@ -959,7 +959,6 @@ cc_add_technology_bluetooth (const gchar         *path,
                 }
 
                 gtk_widget_set_sensitive (WID (priv->builder, "box_bluetooth"), TRUE);
-                gtk_widget_set_sensitive (WID (priv->builder, "switch_tether_bt"), TRUE);
 
                 priv->bluetooth_id = g_signal_connect (priv->bluetooth,
                                                       "property_changed",
@@ -972,6 +971,7 @@ cc_add_technology_bluetooth (const gchar         *path,
         if (g_variant_lookup (properties, "Powered", "b", &powered)) {
                 priv->bluetooth_powered = powered;
                 gtk_switch_set_active (GTK_SWITCH (WID (priv->builder, "switch_bluetooth")), powered);
+                gtk_widget_set_sensitive (WID (priv->builder, "switch_tether_bt"), powered);
         }
 
         if (g_variant_lookup (properties, "Tethering", "b", &tethering)) {
@@ -1573,7 +1573,9 @@ cc_add_service (const gchar         *path,
         if (!g_strcmp0 (type, "wifi")) {
                 value = g_variant_lookup_value (properties, "Security", G_VARIANT_TYPE_STRING_ARRAY);
                 security = g_variant_get_strv (value, NULL);
+        }
 
+        if (!g_strcmp0 (type, "wifi") || !g_strcmp0 (type, "cellular")) {
                 value = g_variant_lookup_value (properties, "Strength", G_VARIANT_TYPE_BYTE);
                 strength = (gchar ) g_variant_get_byte (value);
         }
@@ -2049,8 +2051,8 @@ cc_wifi_tether_switch_toggle (GtkSwitch *sw,
 
         cc_set_tethering_image (priv);
 
-        /* if (enable == priv->wifi_tethered) */
-        /*         return; */
+        if (enable == priv->wifi_tethered)
+                return;
 
         if (enable) {
                 gtk_widget_set_sensitive (GTK_WIDGET (WID (priv->builder, "entry_ssid")), TRUE);
@@ -2229,37 +2231,38 @@ apply_tethering (CcNetworkPanelPrivate *priv)
         ethernet = gtk_switch_get_active (GTK_SWITCH (WID (priv->builder, "switch_tether_ethernet")));
 
         ssid = (gchar *) gtk_entry_get_text (GTK_ENTRY (WID (priv->builder, "entry_ssid")));
-
-        technology_call_set_property (priv->bluetooth,
-                                      "Tethering",
-                                      g_variant_new_variant (g_variant_new_boolean (bluetooth)),
-                                      NULL,
-                                      bluetooth_set_tethered,
-                                      priv);
-
-        technology_call_set_property (priv->ethernet,
-                                      "Tethering",
-                                      g_variant_new_variant (g_variant_new_boolean (ethernet)),
-                                      NULL,
-                                      ethernet_set_tethered,
-                                      priv);
-
-        if (wifi) {
-                technology_call_set_property (priv->wifi,
-                                              "TetheringIdentifier",
-                                              g_variant_new_variant (g_variant_new_string (ssid)),
+        if (priv->tether_bt_toggle)
+                technology_call_set_property (priv->bluetooth,
+                                              "Tethering",
+                                              g_variant_new_variant (g_variant_new_boolean (bluetooth)),
                                               NULL,
-                                              wifi_set_ssid,
+                                              bluetooth_set_tethered,
                                               priv);
-                return;
-        }
+        if (priv->tether_ethernet_toggle)
+                technology_call_set_property (priv->ethernet,
+                                              "Tethering",
+                                              g_variant_new_variant (g_variant_new_boolean (ethernet)),
+                                              NULL,
+                                              ethernet_set_tethered,
+                                              priv);
 
-        technology_call_set_property (priv->wifi,
-                                      "Tethering",
-                                      g_variant_new_variant (g_variant_new_boolean (wifi)),
-                                      NULL,
-                                      wifi_set_tethered,
-                                      priv);
+        if (priv->tether_wifi_toggle) {
+                if (wifi) {
+                        technology_call_set_property (priv->wifi,
+                                                      "TetheringIdentifier",
+                                                      g_variant_new_variant (g_variant_new_string (ssid)),
+                                                      NULL,
+                                                      wifi_set_ssid,
+                                                      priv);
+                        return;
+                } else
+                        technology_call_set_property (priv->wifi,
+                                                      "Tethering",
+                                                      g_variant_new_variant (g_variant_new_boolean (wifi)),
+                                                      NULL,
+                                                      wifi_set_tethered,
+                                                      priv);
+        }
 }
 
 static void
